@@ -4,6 +4,34 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+const MAX_X = 10;
+const MIN_X = -10;
+const MAX_Y = 10
+const MIN_Y = -10
+const PROJ_Z = 1
+
+const projectile_transforms = [];
+
+function getRandomInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function calculateUnitVector(pos1, pos2) {
+    // Calculate vector components
+    const deltaX = pos2.x - pos1.x;
+    const deltaY = pos2.y - pos1.y;
+
+    // Calculate magnitude
+    const magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Calculate unit vector components
+    const unitX = deltaX / magnitude;
+    const unitY = deltaY / magnitude;
+
+    // Return the unit vector as an object
+    return { x: unitX, y: unitY };
+}
+
 export class Polygon_Survivors extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -11,7 +39,8 @@ export class Polygon_Survivors extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15)
+            torus: new defs.Torus(15, 15),
+            sphere: new defs.Subdivision_Sphere(4),
         };
 
         // *** Materials
@@ -24,6 +53,47 @@ export class Polygon_Survivors extends Scene {
     }
 
     make_control_panel() {
+    }
+
+
+    update_projectile_locations() {
+        projectile_transforms.forEach((element, index) => {
+            let proj_x = element[0][3];
+            let proj_y = element[1][3];
+
+            const proj_coords = { x: proj_x, y: proj_y };
+            const target_coords = { x: 0, y: 0 };
+            const unitVec = calculateUnitVector(proj_coords, target_coords);
+
+            // Update the original element in the array
+            projectile_transforms[index] = element.times(Mat4.translation(unitVec.x / 100, unitVec.y / 100, 0));
+        });
+    }
+
+    generate_projectiles(context, program_state, model_transform, t) {
+        let count = t / 2 + 1;
+        if (count > projectile_transforms.length) {
+            let proj_transform = Mat4.identity();
+            let edge = count % 4;
+            if (edge < 1) {
+                console.log("case 0");
+                proj_transform = proj_transform.times(Mat4.translation(MAX_X, getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+            } else if (edge < 2) {
+                console.log("case 1");
+                proj_transform = proj_transform.times(Mat4.translation(getRandomInteger(MIN_X, MAX_X), MAX_Y, PROJ_Z));
+            } else if (edge < 3) {
+                console.log("case 2");
+                proj_transform = proj_transform.times(Mat4.translation(MIN_X, getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+            } else {
+                console.log("case 3");
+                proj_transform = proj_transform.times(Mat4.translation(getRandomInteger(MIN_X, MAX_X), MIN_Y, PROJ_Z));
+            }
+            projectile_transforms.push(proj_transform);
+        }
+        projectile_transforms.forEach(element => {
+            this.shapes.sphere.draw(context, program_state, element, this.materials.test);
+        });
+        this.update_projectile_locations();
     }
 
     display(context, program_state) {
@@ -48,8 +118,7 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
 
-
-
+        this.generate_projectiles(context, program_state, model_transform, t);
     }
 }
 
