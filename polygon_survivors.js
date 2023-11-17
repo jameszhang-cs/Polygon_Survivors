@@ -8,22 +8,53 @@ export class Polygon_Survivors extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
+        this.dir = "";
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15)
+            torus: new defs.Torus(15, 15),
+            player: new defs.Subdivision_Sphere(4),
         };
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")})
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            player: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")})
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.player_transform = Mat4.identity();
+        this.velocity = [0,0];
     }
 
     make_control_panel() {
+        this.key_triggered_button("left", ["j"], function () {
+            this.velocity[0] = -0.05;
+        }, "#ff0000", function () {
+            this.velocity[0] = 0;
+        });
+        this.key_triggered_button("right", ["l"], function () {
+            this.velocity[0] = 0.05;
+        }, "#ff0000", function () {
+            this.velocity[0] = 0;
+        });
+        this.key_triggered_button("up", ["i"], function () {
+            this.velocity[1] = 0.05;
+        }, "#ff0000", function () {
+            this.velocity[1] = 0;
+        });
+        this.key_triggered_button("down", ["k"], function () {
+            this.velocity[1] = -0.05;
+        }, "#ff0000", function () {
+            this.velocity[1] = 0;
+        });
+
+    }
+    draw_player(context, program_state, model_transform){
+        let player_transform = model_transform.times(Mat4.translation(this.velocity[0], this.velocity[1], 0));
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.player);
+        return player_transform;
     }
 
     display(context, program_state) {
@@ -34,7 +65,6 @@ export class Polygon_Survivors extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
-
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
@@ -48,8 +78,7 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
 
-
-
+        this.player_transform = this.draw_player(context, program_state, this.player_transform);
     }
 }
 
