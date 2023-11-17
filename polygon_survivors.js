@@ -11,7 +11,8 @@ export class Polygon_Survivors extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15)
+            torus: new defs.Torus(15, 15),
+            cube: new defs.Cube(),
         };
 
         // *** Materials
@@ -26,6 +27,19 @@ export class Polygon_Survivors extends Scene {
     make_control_panel() {
     }
 
+
+    set_initial_background(context, program_state, model_transform){
+
+        const textured = new defs.Textured_Phong(1);
+        //texture: new Texture
+
+        model_transform = model_transform.times(Mat4.translation(0,0,-1))
+            .times(Mat4.scale(200,100,0.1));
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.test);
+
+        return model_transform;
+    }
+
     display(context, program_state) {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
@@ -38,7 +52,7 @@ export class Polygon_Survivors extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 5, 5, 1);
+        const light_position = vec4(0, 0, 50, 1);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
 
@@ -48,6 +62,8 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
 
+
+        model_transform = this.set_initial_background(context, program_state, model_transform);
 
 
     }
