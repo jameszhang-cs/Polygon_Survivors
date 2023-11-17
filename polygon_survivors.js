@@ -24,7 +24,17 @@ export class Polygon_Survivors extends Scene {
 
     }
 
+    generate_projectiles(context, program_state, model_transform, t) {
+
+    }
     display(context, program_state) {
         const t = program_state.animation_time / 1000;
+        if (!context.scratchpad.controls) {
+            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            // Define the global camera and projection matrices, which are stored in program_state.
+            program_state.set_camera(this.initial_camera_location);
+        }
+        
+        this.generate_projectiles(context, program_state, model_transform, t);
     }
 }
