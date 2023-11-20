@@ -1,7 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
 } = tiny;
 
 const MAX_X = 10;
@@ -45,15 +45,18 @@ export class Polygon_Survivors extends Scene {
             player: new defs.Subdivision_Sphere(4),
         };
 
+        const textured = new defs.Textured_Phong(1);
+
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             player: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")})
+                {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")}),
+            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png")}),
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
         this.player_transform = Mat4.identity();
         this.velocity = [0,0];
     }
@@ -131,12 +134,10 @@ export class Polygon_Survivors extends Scene {
 
     set_initial_background(context, program_state, model_transform){
 
-        const textured = new defs.Textured_Phong(1);
-        //texture: new Texture
 
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
-            .times(Mat4.scale(200,100,0.1));
-        this.shapes.cube.draw(context, program_state, model_transform, this.materials.test);
+            .times(Mat4.scale(50,50,0.1));
+        this.shapes.cube.draw(context, program_state, model_transform, this.materials.grass);
 
         return model_transform;
     }
