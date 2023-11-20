@@ -97,7 +97,7 @@ export class Polygon_Survivors extends Scene {
             let proj_y = element[1][3];
 
             const proj_coords = { x: proj_x, y: proj_y };
-            const target_coords = { x: 0, y: 0 };
+            const target_coords = { x: this.player_transform[0][3], y: this.player_transform[1][3] };
             const unitVec = calculateUnitVector(proj_coords, target_coords);
 
             // Update the original element in the array
@@ -166,9 +166,9 @@ export class Polygon_Survivors extends Scene {
 
         model_transform = this.set_initial_background(context, program_state, model_transform);
 
+        this.player_transform = this.draw_player(context, program_state, this.player_transform);
 
         this.generate_projectiles(context, program_state, model_transform, t);
-        this.player_transform = this.draw_player(context, program_state, this.player_transform);
     }
 }
 
