@@ -59,33 +59,47 @@ export class Polygon_Survivors extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
         this.player_transform = Mat4.identity();
         this.velocity = [0,0];
+        this.speed = 0.08;
     }
 
     make_control_panel() {
         this.key_triggered_button("left", ["j"], function () {
-            this.velocity[0] = -0.05;
+            this.velocity[0] = -1;
         }, "#ff0000", function () {
             this.velocity[0] = 0;
         });
         this.key_triggered_button("right", ["l"], function () {
-            this.velocity[0] = 0.05;
+            this.velocity[0] = 1;
         }, "#ff0000", function () {
             this.velocity[0] = 0;
         });
         this.key_triggered_button("up", ["i"], function () {
-            this.velocity[1] = 0.05;
+            this.velocity[1] = 1;
         }, "#ff0000", function () {
             this.velocity[1] = 0;
         });
         this.key_triggered_button("down", ["k"], function () {
-            this.velocity[1] = -0.05;
+            this.velocity[1] = -1;
         }, "#ff0000", function () {
             this.velocity[1] = 0;
         });
 
     }
+    scale_velocity(velocity){
+        let currentMagnitude = Math.sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
+        if(currentMagnitude === 0){
+            return velocity;
+        }
+
+        let normalized_velocity = [velocity[0]/currentMagnitude, velocity[1]/currentMagnitude];
+        return [normalized_velocity[0]*this.speed, normalized_velocity[1]*this.speed];
+    }
     draw_player(context, program_state, model_transform){
-        let player_transform = model_transform.times(Mat4.translation(this.velocity[0], this.velocity[1], 0));
+        console.log(this.velocity[0], this.velocity[1]);
+        let new_velocity = this.scale_velocity(this.velocity);
+        console.log(new_velocity[0], new_velocity[1]);
+
+        let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));
         this.shapes.player.draw(context, program_state, player_transform, this.materials.player);
         return player_transform;
     }
