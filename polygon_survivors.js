@@ -90,6 +90,27 @@ export class Polygon_Survivors extends Scene {
         return player_transform;
     }
 
+    check_collision(player_transform, projectile_transform) {
+        // Get the positions of the player and projectile
+        const player_position = vec3(player_transform[0][3], player_transform[1][3], player_transform[2][3]);
+        const projectile_position = vec3(projectile_transform[0][3], projectile_transform[1][3], projectile_transform[2][3]);
+
+        // Define the radii of the spheres for collision detection
+        const player_radius = 1.0; // Adjust as needed
+        const projectile_radius = 0.5; // Adjust as needed
+
+        // Calculate the distance between the centers of the spheres
+        const distance = Math.sqrt(
+            Math.pow(player_position[0] - projectile_position[0], 2) +
+            Math.pow(player_position[1] - projectile_position[1], 2) +
+            Math.pow(player_position[2] - projectile_position[2], 2)
+        );
+
+        // Check if there is a collision
+        const collision = distance < (player_radius + projectile_radius);
+
+        return collision;
+    }
 
     update_projectile_locations() {
         projectile_transforms.forEach((element, index) => {
@@ -102,6 +123,13 @@ export class Polygon_Survivors extends Scene {
 
             // Update the original element in the array
             projectile_transforms[index] = element.times(Mat4.translation(unitVec.x / 100, unitVec.y / 100, 0));
+
+            if (this.check_collision(this.player_transform, projectile_transforms[index])) {
+                // Handle player death (you can customize this part)
+                console.log("Player died!");
+                // For example, reset the player's position
+                this.player_transform = Mat4.identity();
+            }
         });
     }
 
@@ -133,8 +161,6 @@ export class Polygon_Survivors extends Scene {
 
 
     set_initial_background(context, program_state, model_transform){
-
-
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
             .times(Mat4.scale(50,50,0.1));
         this.shapes.cube.draw(context, program_state, model_transform, this.materials.grass);
@@ -160,9 +186,6 @@ export class Polygon_Survivors extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
-
-        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test.override({color: yellow}));
-
 
         model_transform = this.set_initial_background(context, program_state, model_transform);
 
