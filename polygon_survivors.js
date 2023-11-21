@@ -95,9 +95,9 @@ export class Polygon_Survivors extends Scene {
         return [normalized_velocity[0]*this.speed, normalized_velocity[1]*this.speed];
     }
     draw_player(context, program_state, model_transform){
-        console.log(this.velocity[0], this.velocity[1]);
+        //console.log(this.velocity[0], this.velocity[1]);
         let new_velocity = this.scale_velocity(this.velocity);
-        console.log(new_velocity[0], new_velocity[1]);
+        //console.log(new_velocity[0], new_velocity[1]);
 
         let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));
         this.shapes.player.draw(context, program_state, player_transform, this.materials.player);
