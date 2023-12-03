@@ -4,13 +4,13 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
 } = tiny;
 
-const MAX_X = 10;
-const MIN_X = -10;
-const MAX_Y = 10
-const MIN_Y = -10
+const MAX_X = 20;
+const MIN_X = -20;
+const MAX_Y = 20
+const MIN_Y = -20
 const PROJ_Z = 1
 
-const projectile_transforms = [];
+const enemy_transforms = [];
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -126,8 +126,8 @@ export class Polygon_Survivors extends Scene {
         return collision;
     }
 
-    update_projectile_locations() {
-        projectile_transforms.forEach((element, index) => {
+    update_enemy_locations() {
+        enemy_transforms.forEach((element, index) => {
             let proj_x = element[0][3];
             let proj_y = element[1][3];
 
@@ -135,10 +135,21 @@ export class Polygon_Survivors extends Scene {
             const target_coords = { x: this.player_transform[0][3], y: this.player_transform[1][3] };
             const unitVec = calculateUnitVector(proj_coords, target_coords);
 
-            // Update the original element in the array
-            projectile_transforms[index] = element.times(Mat4.translation(unitVec.x / 100, unitVec.y / 100, 0));
+            // Calculate the angle between the enemy and the player
+            const angle = Math.atan2(unitVec.y, unitVec.x);
 
-            if (this.check_collision(this.player_transform, projectile_transforms[index])) {
+            // Check if the enemy is already facing the player
+            const currentAngle = Math.atan2(element[1][0], element[0][0]);
+
+            // Calculate the difference in angles
+            const angleDifference = angle - currentAngle;
+
+            // Update the original element in the array with the rotated enemy
+            enemy_transforms[index] = element
+                .times(Mat4.rotation(angleDifference, 0, 0, 1))
+                .times(Mat4.translation(0.01, 0.01, 0));
+
+            if (this.check_collision(this.player_transform, element)) {
                 // Handle player death (you can customize this part)
                 console.log("Player died!");
                 // For example, reset the player's position
@@ -147,30 +158,40 @@ export class Polygon_Survivors extends Scene {
         });
     }
 
-    generate_projectiles(context, program_state, model_transform, t) {
+    generate_enemies(context, program_state, model_transform, t) {
         let count = t / 2 + 1;
-        if (count > projectile_transforms.length) {
+        if (count > enemy_transforms.length) {
             let proj_transform = Mat4.identity();
             let edge = count % 4;
             if (edge < 1) {
                 console.log("case 0");
-                proj_transform = proj_transform.times(Mat4.translation(MAX_X, getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + MAX_X, this.player_transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else if (edge < 2) {
                 console.log("case 1");
-                proj_transform = proj_transform.times(Mat4.translation(getRandomInteger(MIN_X, MAX_X), MAX_Y, PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player_transform[1][3] + MAX_Y, PROJ_Z));
             } else if (edge < 3) {
                 console.log("case 2");
-                proj_transform = proj_transform.times(Mat4.translation(MIN_X, getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + MIN_X, this.player_transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else {
                 console.log("case 3");
-                proj_transform = proj_transform.times(Mat4.translation(getRandomInteger(MIN_X, MAX_X), MIN_Y, PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player_transform[1][3] + MIN_Y, PROJ_Z));
             }
-            projectile_transforms.push(proj_transform);
+            enemy_transforms.push(proj_transform);
         }
-        projectile_transforms.forEach(element => {
-            this.shapes.sphere.draw(context, program_state, element, this.materials.test);
+
+        enemy_transforms.forEach(element => {
+            // Draw the head (sphere)
+            let head_transform = element.times(Mat4.translation(0, 0, 2))
+                .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
+            this.shapes.sphere.draw(context, program_state, head_transform, this.materials.test);
+
+            // Draw the body (cube)
+            let body_transform = element.times(Mat4.translation(0, 0, 0))
+                .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
+            this.shapes.cube.draw(context, program_state, body_transform, this.materials.test);
         });
-        this.update_projectile_locations();
+
+        this.update_enemy_locations();
     }
 
 
@@ -205,7 +226,7 @@ export class Polygon_Survivors extends Scene {
 
         this.player_transform = this.draw_player(context, program_state, this.player_transform);
 
-        this.generate_projectiles(context, program_state, model_transform, t);
+        this.generate_enemies(context, program_state, model_transform, t);
     }
 }
 
