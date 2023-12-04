@@ -1,4 +1,6 @@
 import {defs, tiny} from './examples/common.js';
+import {Player, Enemy} from './entity.js';
+import {Shape_From_File} from "./examples/obj-file-demo.js";
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
@@ -37,6 +39,24 @@ export class Polygon_Survivors extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.dir = "";
+
+        this.player = new Player(100, 0);
+
+        this.player_polys = {
+            model: new Shape_From_File("./assets/amogus.obj"),
+            head: new defs.Subdivision_Sphere(4),
+            body: new defs.Cube(),
+        }
+
+        this.enemy_polys = {
+            head: new defs.Subdivision_Sphere(4),
+            body: new defs.Cube(),
+        }
+
+        this.weapon_polys = {
+            sword: new Shape_From_File("./assets/sword/obj")
+        }
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             torus: new defs.Torus(15, 15),
@@ -51,8 +71,10 @@ export class Polygon_Survivors extends Scene {
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            enemy: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: .6, color: hex_color("#485246")}),
             player: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ff0000")}),
+                {ambient: 1, diffusivity: .6, color: hex_color("#9c1010")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png")}),
         }
 
@@ -99,8 +121,18 @@ export class Polygon_Survivors extends Scene {
         let new_velocity = this.scale_velocity(this.velocity);
         //console.log(new_velocity[0], new_velocity[1]);
 
-        let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));
-        this.shapes.player.draw(context, program_state, player_transform, this.materials.player);
+        let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));// Draw the player (sphere)
+        //this.player_polys.model.draw(context, program_state, player_transform, this.materials.player);
+
+        let head_transform = player_transform.times(Mat4.translation(0, 0, 2))
+            .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
+        this.player_polys.head.draw(context, program_state, head_transform, this.materials.player);
+
+        // Draw the body (cube)
+        let body_transform = player_transform.times(Mat4.translation(0, 0, 0))
+            .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
+        this.player_polys.body.draw(context, program_state, body_transform, this.materials.player);
+
         return player_transform;
     }
 
@@ -151,9 +183,10 @@ export class Polygon_Survivors extends Scene {
 
             if (this.check_collision(this.player_transform, element)) {
                 // Handle player death (you can customize this part)
-                console.log("Player died!");
+                this.player.takeDamage(10);
+                console.log("Player took 10 damage! Health: " + this.player.health);
                 // For example, reset the player's position
-                this.player_transform = Mat4.identity();
+                //this.player_transform = Mat4.identity();
             }
         });
     }
@@ -183,12 +216,12 @@ export class Polygon_Survivors extends Scene {
             // Draw the head (sphere)
             let head_transform = element.times(Mat4.translation(0, 0, 2))
                 .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
-            this.shapes.sphere.draw(context, program_state, head_transform, this.materials.test);
+            this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
 
             // Draw the body (cube)
             let body_transform = element.times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
-            this.shapes.cube.draw(context, program_state, body_transform, this.materials.test);
+            this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
         });
 
         this.update_enemy_locations();
