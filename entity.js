@@ -1,3 +1,5 @@
+
+
 class Entity {
     constructor(health) {
         this.health = health;

@@ -1,6 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 import {Player, Enemy} from './entity.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
+import {getRandomInteger, calculateUnitVector, scale_velocity} from "./util.js";
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
@@ -13,26 +14,6 @@ const MIN_Y = -20
 const PROJ_Z = 1
 
 const enemy_transforms = [];
-
-function getRandomInteger(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function calculateUnitVector(pos1, pos2) {
-    // Calculate vector components
-    const deltaX = pos2.x - pos1.x;
-    const deltaY = pos2.y - pos1.y;
-
-    // Calculate magnitude
-    const magnitude = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-    // Calculate unit vector components
-    const unitX = deltaX / magnitude;
-    const unitY = deltaY / magnitude;
-
-    // Return the unit vector as an object
-    return { x: unitX, y: unitY };
-}
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -53,8 +34,15 @@ export class Polygon_Survivors extends Scene {
             body: new defs.Cube(),
         }
 
+        this.sword_stats = {
+            damage: 10,
+            rotation_speed: 5,
+            length: 2,
+        }
+
         this.weapon_polys = {
-            sword: new Shape_From_File("./assets/sword/obj")
+            sword: new Shape_From_File("./assets/sword/obj"),
+            rect: new defs.Cube(),
         }
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -74,7 +62,9 @@ export class Polygon_Survivors extends Scene {
             enemy: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#485246")}),
             player: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#9c1010")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
+            sword: new Material(new defs.Phong_Shader(),
+                {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png")}),
         }
 
@@ -107,18 +97,10 @@ export class Polygon_Survivors extends Scene {
         });
 
     }
-    scale_velocity(velocity){
-        let currentMagnitude = Math.sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
-        if(currentMagnitude === 0){
-            return velocity;
-        }
 
-        let normalized_velocity = [velocity[0]/currentMagnitude, velocity[1]/currentMagnitude];
-        return [normalized_velocity[0]*this.speed, normalized_velocity[1]*this.speed];
-    }
     draw_player(context, program_state, model_transform){
         //console.log(this.velocity[0], this.velocity[1]);
-        let new_velocity = this.scale_velocity(this.velocity);
+        let new_velocity = scale_velocity(this.velocity, this.speed);
         //console.log(new_velocity[0], new_velocity[1]);
 
         let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));// Draw the player (sphere)
@@ -134,6 +116,22 @@ export class Polygon_Survivors extends Scene {
         this.player_polys.body.draw(context, program_state, body_transform, this.materials.player);
 
         return player_transform;
+    }
+
+    draw_sword(context, program_state, model_transform, t){
+        let mod_time = t % this.sword_stats.rotation_speed;
+        let angle = 2*Math.PI*mod_time/this.sword_stats.rotation_speed;
+        let sword_transform1 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+            .times(Mat4.translation(4, 0, 0))
+            .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
+
+        let sword_transform2 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+            .times(Mat4.translation(-4, 0, 0))
+            .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
+
+        this.weapon_polys.rect.draw(context, program_state, sword_transform1, this.materials.sword);
+        this.weapon_polys.rect.draw(context, program_state, sword_transform2, this.materials.sword);
+
     }
 
     check_collision(player_transform, projectile_transform) {
@@ -236,6 +234,8 @@ export class Polygon_Survivors extends Scene {
         return model_transform;
     }
 
+
+
     display(context, program_state) {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
@@ -257,8 +257,13 @@ export class Polygon_Survivors extends Scene {
 
         model_transform = this.set_initial_background(context, program_state, model_transform);
 
+        //move player based on keypress
         this.player_transform = this.draw_player(context, program_state, this.player_transform);
 
+        //draw swords around player
+        this.draw_sword(context, program_state, this.player_transform, t)
+
+        //generate and draw enemies
         this.generate_enemies(context, program_state, model_transform, t);
     }
 }
