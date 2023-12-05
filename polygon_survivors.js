@@ -36,7 +36,7 @@ export class Polygon_Survivors extends Scene {
         }
 
         this.sword_stats = {
-            damage: 10,
+            damage: 1,
             rotation_speed: 5,
             length: 2,
         }
@@ -52,7 +52,7 @@ export class Polygon_Survivors extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             torus: new defs.Torus(15, 15),
-            cube: new defs.Cube(),
+            field: new defs.Cube(),
             sphere: new defs.Subdivision_Sphere(4),
             player: new defs.Subdivision_Sphere(4),
         };
@@ -64,13 +64,15 @@ export class Polygon_Survivors extends Scene {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             enemy: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#485246")}),
+                {ambient: 1, diffusivity: .6, color: hex_color("#334d5e")}),
             player: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
-            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png")}),
+            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
         }
+
+        this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
     }
@@ -198,7 +200,8 @@ export class Polygon_Survivors extends Scene {
             //console.log(enemy_pos);
 
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
-                element.takeDamage(10);
+                element.takeDamage(this.sword_stats.damage);
+                element.hit = true;
                 console.log("enemy took 10 damage! Health: " + element.health);
                 if (!element.alive){
                     toRemove.push(index);
@@ -238,12 +241,20 @@ export class Polygon_Survivors extends Scene {
             let enemy_transform = element.transform;
             let head_transform = enemy_transform.times(Mat4.translation(0, 0, 2))
                 .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
-            this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
 
             // Draw the body (cube)
             let body_transform = enemy_transform.times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
-            this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
+
+            if(element.hit === true){
+                this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
+                this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
+                element.hit = false;
+            }
+            else {
+                this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
+                this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
+            }
         });
 
         this.update_enemy_locations();
@@ -252,7 +263,7 @@ export class Polygon_Survivors extends Scene {
     set_initial_background(context, program_state, model_transform){
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
             .times(Mat4.scale(50,50,0.1));
-        this.shapes.cube.draw(context, program_state, model_transform, this.materials.grass);
+        this.shapes.field.draw(context, program_state, model_transform, this.materials.grass);
 
         return model_transform;
     }

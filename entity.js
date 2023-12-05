@@ -49,6 +49,7 @@ export class Player extends Entity {
 export class Enemy extends Entity {
     constructor(health, transform) {
         super(health, transform);
+        this.hit = false;
     }
 
     // Override onDeath for specific enemy behavior
