@@ -13,7 +13,7 @@ const MAX_Y = 20
 const MIN_Y = -20
 const PROJ_Z = 1
 
-const enemy_transforms = [];
+const enemies = [];
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -21,7 +21,7 @@ export class Polygon_Survivors extends Scene {
         super();
         this.dir = "";
 
-        this.player = new Player(100, 0);
+        this.player = new Player(100, 0, Mat4.identity(), [0,0], 0.08);
 
         this.player_polys = {
             model: new Shape_From_File("./assets/amogus.obj"),
@@ -69,38 +69,34 @@ export class Polygon_Survivors extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.player_transform = Mat4.identity();
-        this.velocity = [0,0];
-        this.speed = 0.08;
     }
 
     make_control_panel() {
         this.key_triggered_button("left", ["j"], function () {
-            this.velocity[0] = -1;
+            this.player.velocity[0] = -1;
         }, "#ff0000", function () {
-            this.velocity[0] = 0;
+            this.player.velocity[0] = 0;
         });
         this.key_triggered_button("right", ["l"], function () {
-            this.velocity[0] = 1;
+            this.player.velocity[0] = 1;
         }, "#ff0000", function () {
-            this.velocity[0] = 0;
+            this.player.velocity[0] = 0;
         });
         this.key_triggered_button("up", ["i"], function () {
-            this.velocity[1] = 1;
+            this.player.velocity[1] = 1;
         }, "#ff0000", function () {
-            this.velocity[1] = 0;
+            this.player.velocity[1] = 0;
         });
         this.key_triggered_button("down", ["k"], function () {
-            this.velocity[1] = -1;
+            this.player.velocity[1] = -1;
         }, "#ff0000", function () {
-            this.velocity[1] = 0;
+            this.player.velocity[1] = 0;
         });
 
     }
 
     draw_player(context, program_state, model_transform){
-        //console.log(this.velocity[0], this.velocity[1]);
-        let new_velocity = scale_velocity(this.velocity, this.speed);
+        let new_velocity = scale_velocity(this.player.velocity, this.player.speed);
         //console.log(new_velocity[0], new_velocity[1]);
 
         let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));// Draw the player (sphere)
@@ -157,29 +153,30 @@ export class Polygon_Survivors extends Scene {
     }
 
     update_enemy_locations() {
-        enemy_transforms.forEach((element, index) => {
-            let proj_x = element[0][3];
-            let proj_y = element[1][3];
+        enemies.forEach((element, index) => {
+            let enemy_transform = element.transform;
+            let proj_x = enemy_transform[0][3];
+            let proj_y = enemy_transform[1][3];
 
             const proj_coords = { x: proj_x, y: proj_y };
-            const target_coords = { x: this.player_transform[0][3], y: this.player_transform[1][3] };
+            const target_coords = { x: this.player.transform[0][3], y: this.player.transform[1][3] };
             const unitVec = calculateUnitVector(proj_coords, target_coords);
 
             // Calculate the angle between the enemy and the player
             const angle = Math.atan2(unitVec.y, unitVec.x);
 
             // Check if the enemy is already facing the player
-            const currentAngle = Math.atan2(element[1][0], element[0][0]);
+            const currentAngle = Math.atan2(enemy_transform[1][0], enemy_transform[0][0]);
 
             // Calculate the difference in angles
             const angleDifference = angle - currentAngle;
 
             // Update the original element in the array with the rotated enemy
-            enemy_transforms[index] = element
+            element.transform = enemy_transform
                 .times(Mat4.rotation(angleDifference, 0, 0, 1))
                 .times(Mat4.translation(0.01, 0.01, 0));
 
-            if (this.check_collision(this.player_transform, element)) {
+            if (this.check_collision(this.player.transform, element.transform)) {
                 // Handle player death (you can customize this part)
                 this.player.takeDamage(10);
                 console.log("Player took 10 damage! Health: " + this.player.health);
@@ -191,33 +188,34 @@ export class Polygon_Survivors extends Scene {
 
     generate_enemies(context, program_state, model_transform, t) {
         let count = t / 2 + 1;
-        if (count > enemy_transforms.length) {
+        if (count > enemies.length) {
             let proj_transform = Mat4.identity();
             let edge = count % 4;
             if (edge < 1) {
                 console.log("case 0");
-                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + MAX_X, this.player_transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MAX_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else if (edge < 2) {
                 console.log("case 1");
-                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player_transform[1][3] + MAX_Y, PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MAX_Y, PROJ_Z));
             } else if (edge < 3) {
                 console.log("case 2");
-                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + MIN_X, this.player_transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MIN_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else {
                 console.log("case 3");
-                proj_transform = proj_transform.times(Mat4.translation(this.player_transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player_transform[1][3] + MIN_Y, PROJ_Z));
+                proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
-            enemy_transforms.push(proj_transform);
+            enemies.push(new Enemy(100, proj_transform));
         }
 
-        enemy_transforms.forEach(element => {
+        enemies.forEach(element => {
             // Draw the head (sphere)
-            let head_transform = element.times(Mat4.translation(0, 0, 2))
+            let enemy_transform = element.transform;
+            let head_transform = enemy_transform.times(Mat4.translation(0, 0, 2))
                 .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
             this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
 
             // Draw the body (cube)
-            let body_transform = element.times(Mat4.translation(0, 0, 0))
+            let body_transform = enemy_transform.times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
             this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
         });
@@ -258,10 +256,10 @@ export class Polygon_Survivors extends Scene {
         model_transform = this.set_initial_background(context, program_state, model_transform);
 
         //move player based on keypress
-        this.player_transform = this.draw_player(context, program_state, this.player_transform);
+        this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
         //draw swords around player
-        this.draw_sword(context, program_state, this.player_transform, t)
+        this.draw_sword(context, program_state, this.player.transform, t)
 
         //generate and draw enemies
         this.generate_enemies(context, program_state, model_transform, t);

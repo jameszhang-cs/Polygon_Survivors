@@ -1,8 +1,9 @@
 
 
 class Entity {
-    constructor(health) {
+    constructor(health, transform) {
         this.health = health;
+        this.transform = transform
     }
 
     takeDamage(amount) {
@@ -22,8 +23,10 @@ class Entity {
 }
 
 export class Player extends Entity {
-    constructor(health, level) {
-        super(health);
+    constructor(health, level, transform, velocity, speed) {
+        super(health, transform);
+        this.velocity = velocity;
+        this.speed = speed;
         this.level = level;
     }
 
@@ -42,8 +45,8 @@ export class Player extends Entity {
 }
 
 export class Enemy extends Entity {
-    constructor(health) {
-        super(health);
+    constructor(health, transform) {
+        super(health, transform);
     }
 
     // Override onDeath for specific enemy behavior
