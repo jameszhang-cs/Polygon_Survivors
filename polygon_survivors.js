@@ -13,6 +13,7 @@ const MIN_X = -20;
 const MAX_Y = 20
 const MIN_Y = -20
 const PROJ_Z = 1
+const MAX_HEALTH = 100
 
 const enemies = [];
 
@@ -22,7 +23,7 @@ export class Polygon_Survivors extends Scene {
         super();
         this.dir = "";
 
-        this.player = new Player(100, 0, Mat4.identity(), [0,0], 0.08);
+        this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
 
         this.player_polys = {
             model: new Shape_From_File("./assets/amogus.obj"),
@@ -37,12 +38,12 @@ export class Polygon_Survivors extends Scene {
 
         this.sword_stats = {
             damage: 1,
-            rotation_speed: 5,
+            rotation_speed: 1,
             length: 2,
         }
 
         this.weapon_polys = {
-            sword: new Shape_From_File("./assets/sword/obj"),
+            sword: new Shape_From_File("./assets/sword.obj"),
             rect: new defs.Cube(),
         }
 
@@ -53,6 +54,7 @@ export class Polygon_Survivors extends Scene {
         this.shapes = {
             torus: new defs.Torus(15, 15),
             field: new defs.Cube(),
+            healthbar: new defs.Cube(),
             sphere: new defs.Subdivision_Sphere(4),
             player: new defs.Subdivision_Sphere(4),
         };
@@ -61,6 +63,8 @@ export class Polygon_Survivors extends Scene {
 
         // *** Materials
         this.materials = {
+            healthbar: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: .6, color: hex_color("#00ef04")}),
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             enemy: new Material(new defs.Phong_Shader(),
@@ -69,7 +73,7 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
-            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
+            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/tile_texture.jpeg", "LINEAR_MIPMAP_LINEAR")}),
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -114,9 +118,15 @@ export class Polygon_Survivors extends Scene {
 
         // Draw the body (cube)
         let body_transform = player_transform.times(Mat4.translation(0, 0, 0))
-            .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
+            .times(Mat4.scale(1, 1, 2)); // Adjust scale as needed
         this.player_polys.body.draw(context, program_state, body_transform, this.materials.player);
 
+        let bar_length = 1.5*this.player.health/MAX_HEALTH;
+        let bar_shift = 1.5 - bar_length;
+
+        let bar_transform = player_transform.times(Mat4.translation(-bar_shift, 2, 2))
+            .times(Mat4.scale(1.5*this.player.health/MAX_HEALTH, 0.15, 0.01));
+        this.shapes.healthbar.draw(context, program_state, bar_transform, this.materials.healthbar)
         return player_transform;
     }
 
@@ -184,9 +194,9 @@ export class Polygon_Survivors extends Scene {
 
             if (this.check_collision(this.player.transform, element.transform)) {
                 // Handle player death (you can customize this part)
-                this.player.takeDamage(10);
+                this.player.takeDamage(1);
                 //element.takeDamage(10);
-                console.log("Player took 10 damage! Health: " + this.player.health);
+                console.log("Player took 1 damage! Health: " + this.player.health);
                 // For example, reset the player's position
                 //this.player_transform = Mat4.identity();
             }
@@ -233,7 +243,7 @@ export class Polygon_Survivors extends Scene {
                 console.log("case 3");
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
-            enemies.push(new Enemy(100, proj_transform));
+            enemies.push(new Enemy(MAX_HEALTH, proj_transform));
         }
 
         enemies.forEach(element => {
@@ -246,6 +256,7 @@ export class Polygon_Survivors extends Scene {
             let body_transform = enemy_transform.times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
 
+
             if(element.hit === true){
                 this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
                 this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
@@ -255,6 +266,13 @@ export class Polygon_Survivors extends Scene {
                 this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
                 this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
             }
+            let bar_length = 1.5*element.health/MAX_HEALTH;
+            let bar_shift = 1.5 - bar_length;
+
+            let bar_transform = Mat4.identity();
+            bar_transform = bar_transform.times(Mat4.translation(enemy_transform[0][3] - bar_shift, enemy_transform[1][3] + 2, enemy_transform[2][3] + 2))
+                .times(Mat4.scale(bar_length, 0.15, 0.01));
+            this.shapes.healthbar.draw(context, program_state, bar_transform, this.materials.healthbar.override({color:hex_color("#ee1717")}))
         });
 
         this.update_enemy_locations();
@@ -283,7 +301,7 @@ export class Polygon_Survivors extends Scene {
 
         const light_position = vec4(0, 0, 50, 1);
         // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const yellow = hex_color("#fac91a");
