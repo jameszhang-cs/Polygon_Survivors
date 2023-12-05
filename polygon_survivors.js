@@ -1,7 +1,8 @@
 import {defs, tiny} from './examples/common.js';
 import {Player, Enemy} from './entity.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
-import {getRandomInteger, calculateUnitVector, scale_velocity} from "./util.js";
+import {getRandomInteger, calculateUnitVector, scale_velocity,
+    sword_collision, gen_sword_points} from "./util.js";
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
@@ -44,6 +45,9 @@ export class Polygon_Survivors extends Scene {
             sword: new Shape_From_File("./assets/sword/obj"),
             rect: new defs.Cube(),
         }
+
+        this.sword_transform1 = Mat4.identity();
+        this.sword_transform2 = Mat4.identity();
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -117,42 +121,42 @@ export class Polygon_Survivors extends Scene {
     draw_sword(context, program_state, model_transform, t){
         let mod_time = t % this.sword_stats.rotation_speed;
         let angle = 2*Math.PI*mod_time/this.sword_stats.rotation_speed;
-        let sword_transform1 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+        this.sword_transform1 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
             .times(Mat4.translation(4, 0, 0))
             .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
 
-        let sword_transform2 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+        this.sword_transform2 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
             .times(Mat4.translation(-4, 0, 0))
             .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
 
-        this.weapon_polys.rect.draw(context, program_state, sword_transform1, this.materials.sword);
-        this.weapon_polys.rect.draw(context, program_state, sword_transform2, this.materials.sword);
+        this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword);
+        this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword);
 
     }
 
-    check_collision(player_transform, projectile_transform) {
+    check_collision(obj1_transform, obj2_transform) {
         // Get the positions of the player and projectile
-        const player_position = vec3(player_transform[0][3], player_transform[1][3], player_transform[2][3]);
-        const projectile_position = vec3(projectile_transform[0][3], projectile_transform[1][3], projectile_transform[2][3]);
+        const obj1_position = vec3(obj1_transform[0][3], obj1_transform[1][3], obj1_transform[2][3]);
+        const obj2_position = vec3(obj2_transform[0][3], obj2_transform[1][3], obj2_transform[2][3]);
 
         // Define the radii of the spheres for collision detection
-        const player_radius = 1.0; // Adjust as needed
-        const projectile_radius = 0.5; // Adjust as needed
+        const obj1_radius = 1.0; // Adjust as needed
+        const obj2_radius = 0.5; // Adjust as needed
 
         // Calculate the distance between the centers of the spheres
         const distance = Math.sqrt(
-            Math.pow(player_position[0] - projectile_position[0], 2) +
-            Math.pow(player_position[1] - projectile_position[1], 2) +
-            Math.pow(player_position[2] - projectile_position[2], 2)
+            Math.pow(obj1_position[0] - obj2_position[0], 2) +
+            Math.pow(obj1_position[1] - obj2_position[1], 2) +
+            Math.pow(obj1_position[2] - obj2_position[2], 2)
         );
 
         // Check if there is a collision
-        const collision = distance < (player_radius + projectile_radius);
-
-        return collision;
+        return distance < (obj1_radius + obj2_radius);
     }
 
     update_enemy_locations() {
+        let toRemove = [];
+
         enemies.forEach((element, index) => {
             let enemy_transform = element.transform;
             let proj_x = enemy_transform[0][3];
@@ -179,11 +183,33 @@ export class Polygon_Survivors extends Scene {
             if (this.check_collision(this.player.transform, element.transform)) {
                 // Handle player death (you can customize this part)
                 this.player.takeDamage(10);
+                //element.takeDamage(10);
                 console.log("Player took 10 damage! Health: " + this.player.health);
                 // For example, reset the player's position
                 //this.player_transform = Mat4.identity();
             }
+            let sword1_points = gen_sword_points(this.player.transform, this.sword_transform1, this.sword_stats.length, 10, 3);
+            let sword2_points = gen_sword_points(this.player.transform, this.sword_transform2, this.sword_stats.length, 10, 3);
+
+            //console.log(sword1_points);
+            //console.log(sword2_points);
+            let enemy_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
+
+            //console.log(enemy_pos);
+
+            if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
+                element.takeDamage(10);
+                console.log("enemy took 10 damage! Health: " + element.health);
+                if (!element.alive){
+                    toRemove.push(index);
+                }
+            }
+
         });
+
+        for (let i = toRemove.length - 1; i >= 0; i--) {
+            enemies.splice(toRemove[i], 1);
+        }
     }
 
     generate_enemies(context, program_state, model_transform, t) {
@@ -222,7 +248,6 @@ export class Polygon_Survivors extends Scene {
 
         this.update_enemy_locations();
     }
-
 
     set_initial_background(context, program_state, model_transform){
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
@@ -263,6 +288,7 @@ export class Polygon_Survivors extends Scene {
 
         //generate and draw enemies
         this.generate_enemies(context, program_state, model_transform, t);
+
     }
 }
 

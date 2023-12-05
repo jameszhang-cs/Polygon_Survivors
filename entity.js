@@ -4,6 +4,7 @@ class Entity {
     constructor(health, transform) {
         this.health = health;
         this.transform = transform
+        this.alive = true;
     }
 
     takeDamage(amount) {
@@ -17,6 +18,7 @@ class Entity {
     onDeath() {
         // Handle death (can be overridden in subclasses)
         console.log("Entity died");
+        this.alive = false;
     }
 
     // Additional common methods...
@@ -52,6 +54,7 @@ export class Enemy extends Entity {
     // Override onDeath for specific enemy behavior
     onDeath() {
         console.log("Enemy defeated");
+        this.alive = false;
         // Specific enemy death behavior...
     }
 
