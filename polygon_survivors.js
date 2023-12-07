@@ -1,5 +1,5 @@
 import {defs, tiny} from './examples/common.js';
-import {Player, Enemy} from './entity.js';
+import {Player, Enemy, Projectile} from './entity.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
 import {getRandomInteger, calculateUnitVector, scale_velocity,
     sword_collision, gen_sword_points} from "./util.js";
@@ -16,8 +16,13 @@ const PROJ_Z = 1
 const MAX_HEALTH = 10
 
 let enemies = [];
+
 let edge = 0;
-const orbs = [];
+
+let orbs = [];
+let lasers_left = [];
+let lasers_right = [];
+
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -49,6 +54,11 @@ export class Polygon_Survivors extends Scene {
             rotation_speed: 1,
             length: 2,
         }
+        this.laser_stats = {
+            damage: 1,
+            length: 1.5,
+        }
+
 
         this.weapon_polys = {
             sword: new Shape_From_File("./assets/sword.obj"),
@@ -89,6 +99,8 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
             orb: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, color: hex_color("#A9423F")}),
+            laser: new Material(new defs.Phong_Shader(),
+                {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
@@ -229,7 +241,70 @@ export class Polygon_Survivors extends Scene {
 
     }
 
+    draw_laser(context, program_state, model_transform, t){
+
+
+        let count = t / 2  ;
+        if (count > lasers_left.length && lasers_left.length < 1) {
+            lasers_left.push(new Projectile(MAX_HEALTH, model_transform));
+        }
+        if (count > lasers_right.length && lasers_right.length < 1) {
+            lasers_right.push(new Projectile(MAX_HEALTH, model_transform));
+        }
+
+        lasers_left.forEach(element => {
+            // Draw the head (sphere)
+            let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
+                .times(Mat4.scale(this.laser_stats.length, 0.2, 0.2)); // Adjust scale as needed
+            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
+        });
+        lasers_right.forEach(element => {
+            // Draw the head (sphere)
+            let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
+                .times(Mat4.scale(1.5, 0.2, 0.2)); // Adjust scale as needed
+            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
+        });
+
+        this.update_laser_locations();
+
+    }
+
+    update_laser_locations(){
+        let toRemoveLeft = [];
+        let toRemoveRight = [];
+        let laser_x = 1;
+        let laser_y = 0;
+
+        lasers_left.forEach((element, index)  =>{
+            let laser_transform = element.transform;
+            let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
+            element.transform = laser_transform.times(Mat4.translation(-laser_x, laser_y, 0));
+
+            if (laser_pos.x < -20){
+                element.onDeath();
+                toRemoveLeft.push(index);
+            }
+        })
+        lasers_right.forEach((element, index)  =>{
+            let laser_transform = element.transform;
+            let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
+            element.transform = laser_transform.times(Mat4.translation(laser_x, laser_y, 0));
+
+            if (laser_pos.x > 20){
+                element.onDeath();
+                toRemoveRight.push(index);
+            }
+        })
+        for (let i = toRemoveLeft.length - 1; i >= 0; i--) {
+            lasers_left.splice(toRemoveLeft [i], 1);
+        }
+        for (let i = toRemoveRight.length - 1; i >= 0; i--) {
+            lasers_right.splice(toRemoveRight [i], 1);
+        }
+    }
+
     check_collision(obj1_transform, obj2_transform, radius) {
+
         // Get the positions of the player and projectile
         const obj1_position = vec3(obj1_transform[0][3], obj1_transform[1][3], obj1_transform[2][3]);
         const obj2_position = vec3(obj2_transform[0][3], obj2_transform[1][3], obj2_transform[2][3]);
@@ -295,6 +370,30 @@ export class Polygon_Survivors extends Scene {
             let enemy_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
 
             //console.log(enemy_pos);
+
+            let laser_collision = lasers_left;
+            laser_collision.forEach((laser, index) =>{
+                let laser_transform = laser.transform;
+                let laser_points = gen_sword_points(this.player.transform, laser_transform, 1, 10, 3);
+                if (sword_collision(laser_points, enemy_pos, 2)){
+                    element.takeDamage(this.laser_stats.damage);
+                    element.hit = true;
+                }
+                if (!element.alive){
+                    toRemove.push(index);
+                    this.player.curr_xp += 1;
+                    if (this.player.curr_xp === this.player.levelup_xp) {
+                        this.player.level += 1;
+
+                        this.upgrade_gear();
+                        this.levelup_state = true;
+
+                        this.player.levelup_xp += 5;
+                        this.player.curr_xp = 0;
+                    }
+                }
+
+            })
 
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
                 element.takeDamage(this.sword_stats.damage);
@@ -402,6 +501,9 @@ export class Polygon_Survivors extends Scene {
         this.speed = 0.08;
 
         enemies = [];
+        orbs = [];
+        lasers_left = [];
+        lasers_right = [];
 
         this.sword_stats.length = 2;
         this.sword_stats.rotation_speed = 1;
@@ -456,7 +558,7 @@ export class Polygon_Survivors extends Scene {
             model_transform = this.set_initial_background(context, program_state, model_transform);
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
-            model_transform = this.set_initial_background(context, program_state, model_transform);
+
 
 
             //move player based on keypress
@@ -467,6 +569,9 @@ export class Polygon_Survivors extends Scene {
 
             //draw orbs
             this.draw_orb(context, program_state, this.player.transform, t);
+
+            //draw laser projectiles
+            this.draw_laser(context, program_state, this.player.transform, t);
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, t);

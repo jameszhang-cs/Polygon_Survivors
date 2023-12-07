@@ -65,3 +65,16 @@ export class Enemy extends Entity {
     // Enemy-specific methods...
 }
 
+export class Projectile extends Entity {
+    constructor(health, transform) {
+        super(health, transform);
+    }
+
+    // Override onDeath for specific projectile behavior
+    onDeath() {
+        console.log("Projectile removed");
+        this.alive = false;
+    }
+
+
+}
