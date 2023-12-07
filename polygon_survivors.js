@@ -108,6 +108,7 @@ export class Polygon_Survivors extends Scene {
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
+            sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword.png", "LINEAR_MIPMAP_LINEAR")}),
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -246,8 +247,6 @@ export class Polygon_Survivors extends Scene {
 
 
     draw_laser(context, program_state, model_transform, t){
-
-
         let count = t / 2  ;
         if (count > lasers_left.length && lasers_left.length < 1) {
             lasers_left.push(new Projectile(MAX_HEALTH, model_transform));
@@ -430,18 +429,15 @@ export class Polygon_Survivors extends Scene {
 
             //console.log(enemy_pos);
 
-            let laser_collision = lasers_right;
-            laser_collision.forEach((laser) =>{
-                let laser_transform = laser.transform;
-                if (this.check_collision(element.transform, laser_transform, 1)) {
+            lasers_right.forEach((laser) =>{
+                if (this.check_collision(element.transform, laser.transform, 1)){
                     element.takeDamage(this.laser_stats.damage);
                     element.hit = true;
                 }
             })
-            laser_collision = lasers_left;
-            laser_collision.forEach((laser) =>{
-                let laser_transform = laser.transform;
-                if (this.check_collision(element.transform, laser_transform, 1)) {
+
+            lasers_left.forEach((laser) =>{
+                if (this.check_collision(element.transform, laser.transform, 1)){
                     element.takeDamage(this.laser_stats.damage);
                     element.hit = true;
                 }
@@ -530,6 +526,19 @@ export class Polygon_Survivors extends Scene {
         return model_transform;
     }
 
+    draw_loadout(context, program_state) {
+        // Draw the initial background
+        let model_transform = Mat4.identity();
+        this.set_initial_background(context, program_state, model_transform);
+
+        // Draw a square at the top-left corner of the screen
+        let square_transform = model_transform
+            .times(Mat4.translation(-30, 20, 0))
+            .times(Mat4.scale(2, 2, 0));
+        console.log(square_transform);
+        this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
+    }
+
     upgrade_gear(){
         this.sword_stats.length += 0.2;
         this.sword_stats.damage += 1;
@@ -603,10 +612,12 @@ export class Polygon_Survivors extends Scene {
         }
         else {
             model_transform = this.set_initial_background(context, program_state, model_transform);
+
+            //draws weapon tray
+            this.draw_loadout(context, program_state)
+
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
-
-
 
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
