@@ -13,7 +13,7 @@ const MIN_X = -20;
 const MAX_Y = 20
 const MIN_Y = -20
 const PROJ_Z = 1
-const MAX_HEALTH = 10
+const MAX_HEALTH = 100
 
 let enemies = [];
 
@@ -55,7 +55,7 @@ export class Polygon_Survivors extends Scene {
             length: 2,
         }
         this.laser_stats = {
-            damage: 1,
+            damage: 10,
             length: 1.5,
         }
 
@@ -255,13 +255,13 @@ export class Polygon_Survivors extends Scene {
         lasers_left.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(this.laser_stats.length, 0.2, 0.2)); // Adjust scale as needed
+                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
         lasers_right.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(1.5, 0.2, 0.2)); // Adjust scale as needed
+                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
 
@@ -371,26 +371,12 @@ export class Polygon_Survivors extends Scene {
 
             //console.log(enemy_pos);
 
-            let laser_collision = lasers_left;
-            laser_collision.forEach((laser, index) =>{
+            let laser_collision = lasers_right;
+            laser_collision.forEach((laser) =>{
                 let laser_transform = laser.transform;
-                let laser_points = gen_sword_points(this.player.transform, laser_transform, 1, 10, 3);
-                if (sword_collision(laser_points, enemy_pos, 2)){
+                if (this.check_collision(element.transform, laser_transform, 1)){
                     element.takeDamage(this.laser_stats.damage);
                     element.hit = true;
-                }
-                if (!element.alive){
-                    toRemove.push(index);
-                    this.player.curr_xp += 1;
-                    if (this.player.curr_xp === this.player.levelup_xp) {
-                        this.player.level += 1;
-
-                        this.upgrade_gear();
-                        this.levelup_state = true;
-
-                        this.player.levelup_xp += 5;
-                        this.player.curr_xp = 0;
-                    }
                 }
 
             })
@@ -399,18 +385,17 @@ export class Polygon_Survivors extends Scene {
                 element.takeDamage(this.sword_stats.damage);
                 element.hit = true;
                 console.log("enemy took 10 damage! Health: " + element.health);
-                if (!element.alive){
-                    toRemove.push(index);
-                    this.player.curr_xp += 1;
-                    if (this.player.curr_xp === this.player.levelup_xp) {
-                        this.player.level += 1;
+            }
+            if (!element.alive){
+                toRemove.push(index);
+                this.player.curr_xp += 1;
+                if (this.player.curr_xp === this.player.levelup_xp) {
+                    this.player.level += 1;
+                    this.upgrade_gear();
+                    this.levelup_state = true;
 
-                        this.upgrade_gear();
-                        this.levelup_state = true;
-
-                        this.player.levelup_xp += 5;
-                        this.player.curr_xp = 0;
-                    }
+                    this.player.levelup_xp += 5;
+                    this.player.curr_xp = 0;
                 }
             }
 
