@@ -454,7 +454,8 @@ export class Polygon_Survivors extends Scene {
             //draw swords around player
             this.draw_sword(context, program_state, this.player.transform, t);
 
-            this.draw_orb(context, program_state, this.player.transform);
+            //draw orbs
+            this.draw_orb(context, program_state, this.player.transform, t);
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, t);
