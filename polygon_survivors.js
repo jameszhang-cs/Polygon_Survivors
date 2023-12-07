@@ -23,6 +23,7 @@ let orbs = [];
 let lasers_left = [];
 let lasers_right = [];
 
+let levelup_opts = [];
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -180,6 +181,19 @@ export class Polygon_Survivors extends Scene {
         // Rectangle 3
         let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(5, 0, 1));
         this.shapes.square.draw(context, program_state, opt3_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+    }
+
+    choose_levelup(x) {
+        if (x < -0.33) {
+            console.log("option 1");
+            //handle opt 1
+        } else if (x < 0.33) {
+            console.log("option 2");
+            //handle opt 2
+        } else {
+            console.log("option 3");
+            //handle opt 3
+        }
     }
 
     draw_start_menu(context, program_state, model_transform, t){
@@ -354,7 +368,7 @@ export class Polygon_Survivors extends Scene {
                 // Handle player death (you can customize this part)
                 this.player.takeDamage(1);
                 //element.takeDamage(10);
-                console.log("Player took 1 damage! Health: " + this.player.health);
+                //console.log("Player took 1 damage! Health: " + this.player.health);
                 if(this.player.health <= 0){
                     this.start_screen = true;
                     this.cleanup_game();
@@ -391,7 +405,7 @@ export class Polygon_Survivors extends Scene {
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
                 element.takeDamage(this.sword_stats.damage);
                 element.hit = true;
-                console.log("enemy took 10 damage! Health: " + element.health);
+                //console.log("enemy took 10 damage! Health: " + element.health);
             }
             if (!element.alive){
                 toRemove.push(index);
@@ -419,22 +433,15 @@ export class Polygon_Survivors extends Scene {
             let proj_transform = Mat4.identity();
             let spawn = edge % 4;
             if (spawn < 1) {
-                console.log("case 0");
-                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MAX_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else if (spawn < 2) {
-                console.log("case 1");
-                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MAX_Y, PROJ_Z));
             } else if (spawn < 3) {
-                console.log("case 2");
-                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MIN_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else {
-                console.log("case 3");
-                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
+            edge++;
             enemies.push(new Enemy(MAX_HEALTH, proj_transform));
         }
 
@@ -513,16 +520,19 @@ export class Polygon_Survivors extends Scene {
             if (this.start_screen) {
                 this.start_screen = false;
             }
-            if(this.levelup_state) {
-                this.levelup_state = false;
-            }
             const rect = canvas.getBoundingClientRect()
+            /*
             console.log("e.clientX: " + e.clientX);
             console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
             console.log("e.clientY: " + e.clientY);
             console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
             console.log("mouse_position(e): " + mouse_position(e));
+             */
             this.my_mouse_down(e, mouse_position(e), context, program_state);
+            if(this.levelup_state) {
+                this.levelup_state = false;
+                this.choose_levelup(mouse_position(e)[0]);
+            }
         });
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
