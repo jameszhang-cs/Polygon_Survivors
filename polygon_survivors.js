@@ -256,8 +256,6 @@ export class Polygon_Survivors extends Scene {
     }
 
     draw_laser(context, program_state, model_transform, t){
-
-
         let count = t / 2  ;
         if (count > lasers_left.length && lasers_left.length < 1) {
             lasers_left.push(new Projectile(MAX_HEALTH, model_transform));
@@ -385,14 +383,18 @@ export class Polygon_Survivors extends Scene {
 
             //console.log(enemy_pos);
 
-            let laser_collision = lasers_right;
-            laser_collision.forEach((laser) =>{
-                let laser_transform = laser.transform;
-                if (this.check_collision(element.transform, laser_transform, 1)){
+            lasers_right.forEach((laser) =>{
+                if (this.check_collision(element.transform, laser.transform, 1)){
                     element.takeDamage(this.laser_stats.damage);
                     element.hit = true;
                 }
+            })
 
+            lasers_left.forEach((laser) =>{
+                if (this.check_collision(element.transform, laser.transform, 1)){
+                    element.takeDamage(this.laser_stats.damage);
+                    element.hit = true;
+                }
             })
 
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
