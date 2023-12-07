@@ -27,6 +27,7 @@ export class Polygon_Survivors extends Scene {
         this.mousey;
 
         this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
+        this.levelup_state = false;
 
         this.player_polys = {
             model: new Shape_From_File("./assets/amogus.obj"),
@@ -174,8 +175,8 @@ export class Polygon_Survivors extends Scene {
         const obj2_position = vec3(obj2_transform[0][3], obj2_transform[1][3], obj2_transform[2][3]);
 
         // Define the radii of the spheres for collision detection
-        const obj1_radius = 1.0; // Adjust as needed
-        const obj2_radius = 0.5; // Adjust as needed
+        const obj1_radius = 1.5; // Adjust as needed
+        const obj2_radius = 1.5; // Adjust as needed
 
         // Calculate the distance between the centers of the spheres
         const distance = Math.sqrt(
@@ -237,6 +238,14 @@ export class Polygon_Survivors extends Scene {
                 console.log("enemy took 10 damage! Health: " + element.health);
                 if (!element.alive){
                     toRemove.push(index);
+                    this.player.curr_xp += 1;
+                    if (this.player.curr_xp === this.player.levelup_xp) {
+                        this.player.level += 1;
+                        this.levelup_state = true;
+
+                        this.player.levelup_xp += 5;
+                        this.player.curr_xp = 0;
+                    }
                 }
             }
 
@@ -308,7 +317,11 @@ export class Polygon_Survivors extends Scene {
         return model_transform;
     }
 
-
+    upgrade_gear(){
+        this.sword_stats.length += 0.2;
+        this.sword_stats.damage += 1;
+        this.sword_stats.rotation_speed -= 0.1;
+    }
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
@@ -339,6 +352,11 @@ export class Polygon_Survivors extends Scene {
 
         //generate and draw enemies
         this.generate_enemies(context, program_state, model_transform, t);
+
+        if (this.levelup_state) {
+            this.upgrade_gear();
+            this.levelup_state = false;
+        }
 
         let canvas = context.canvas;
         const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
