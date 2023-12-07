@@ -33,6 +33,10 @@ export class Player extends Entity {
 
         this.levelup_xp = 5;
         this.curr_xp = 0;
+
+        this.sword = true;
+        this.laser = false;
+        this.orb = false;
     }
 
     levelUp() {

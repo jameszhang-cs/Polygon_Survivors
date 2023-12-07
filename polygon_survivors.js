@@ -24,7 +24,13 @@ let orbs = [];
 let lasers_left = [];
 let lasers_right = [];
 
-let levelup_opts = [];
+let upgrades = [
+    "sword damage",
+    "sword length",
+    "sword speed",
+    "new laser",
+    "laser damage",
+];
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -53,6 +59,7 @@ export class Polygon_Survivors extends Scene {
             head: new defs.Subdivision_Sphere(4),
             body: new defs.Cube(),
         }
+
 
         this.sword_stats = {
             damage: 1,
@@ -175,32 +182,76 @@ export class Polygon_Survivors extends Scene {
         let model_transform = Mat4.identity()
         this.set_initial_background(context, program_state, model_transform);
         // Rectangle 1
-        let opt1_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(-5, 0, 1));
-        this.shapes.square.draw(context, program_state, opt1_transform, this.materials.sword_icon.override({color: hex_color("#d0c9bf")}));
+        let opt1_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(-3, 0, 1));
+        this.shapes.square.draw(context, program_state, opt1_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
 
         // Rectangle 2
         let opt2_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(0, 0, 1));
         this.shapes.square.draw(context, program_state, opt2_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
 
         // Rectangle 3
-        let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(5, 0, 1));
+        let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(3, 0, 1));
         this.shapes.square.draw(context, program_state, opt3_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
     }
 
+    gen_levelup_opts() {
+        let levelup_opts = [];
+        for (let i=0; i<3; i++){
+            let randomIndex = Math.floor(Math.random() * upgrades.length);
+            if (this.player.laser){
+                while(upgrades[randomIndex] === "new laser"){
+                    randomIndex = Math.floor(Math.random() * upgrades.length);
+                }
+            }
+            if (!this.player.laser){
+                while(upgrades[randomIndex] === "laser damage"){
+                    randomIndex = Math.floor(Math.random() * upgrades.length);
+                }
+            }
+            levelup_opts.push(upgrades[randomIndex]);
+        }
+        return levelup_opts;
+    }
+
+    execute_option(option){
+        switch (option){
+            case "sword damage":
+                this.sword_stats.damage += 2;
+                console.log("upgraded sword damage!");
+                break;
+            case "sword length":
+                this.sword_stats.length += 0.2;
+                console.log("upgraded sword length!");
+                break;
+            case "sword speed":
+                this.sword_stats.rotation_speed -= 0.1;
+                console.log("upgraded sword speed!");
+                break;
+            case "new laser":
+                this.player.laser = true;
+                console.log("added new laser!");
+                break;
+            case "laser damage":
+                this.laser_stats.damage += 2;
+                console.log("upgraded laser damage!");
+                break;
+        }
+    }
     choose_levelup(x) {
+        let options = this.gen_levelup_opts();
         if (x < -0.33) {
             console.log("option 1");
+            this.execute_option(options[0]);
             //handle opt 1
         } else if (x < 0.33) {
             console.log("option 2");
+            this.execute_option(options[0]);
             //handle opt 2
         } else {
             console.log("option 3");
+            this.execute_option(options[0]);
             //handle opt 3
         }
-    }
-
-    draw_start_menu(context, program_state, model_transform, t){
     }
 
     draw_player(context, program_state, model_transform){
@@ -453,7 +504,6 @@ export class Polygon_Survivors extends Scene {
                 this.player.curr_xp += 1;
                 if (this.player.curr_xp === this.player.levelup_xp) {
                     this.player.level += 1;
-                    this.upgrade_gear();
                     this.levelup_state = true;
 
                     this.player.levelup_xp += 5;
@@ -539,12 +589,6 @@ export class Polygon_Survivors extends Scene {
         this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
     }
 
-    upgrade_gear(){
-        this.sword_stats.length += 0.2;
-        this.sword_stats.damage += 1;
-        this.sword_stats.rotation_speed -= 0.1;
-    }
-
     cleanup_game(){
         this.player.level = 1;
         this.player.curr_xp = 0;
@@ -627,13 +671,17 @@ export class Polygon_Survivors extends Scene {
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
             //draw swords around player
-            this.draw_sword(context, program_state, this.player.transform, round_time);
+            if(this.player.sword) {
+                this.draw_sword(context, program_state, this.player.transform, t);
+            }
 
             //draw orbs
             this.draw_orb(context, program_state, this.player.transform, round_time);
 
             //draw laser projectiles
-            this.draw_laser(context, program_state, this.player.transform, round_time);
+            if(this.player.laser) {
+                this.draw_laser(context, program_state, this.player.transform, t);
+            }
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, round_time);
