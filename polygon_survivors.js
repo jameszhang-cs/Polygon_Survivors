@@ -15,7 +15,7 @@ const MIN_Y = -20
 const PROJ_Z = 1
 const MAX_HEALTH = 100
 
-const enemies = [];
+let enemies = [];
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -58,11 +58,16 @@ export class Polygon_Survivors extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15),
-            field: new defs.Cube(),
-            healthbar: new defs.Cube(),
+            box: new defs.Cube(),
             sphere: new defs.Subdivision_Sphere(4),
-            player: new defs.Subdivision_Sphere(4),
+            circle: new defs.Regular_2D_Polygon(50,50),
+            square: new defs.Square(),
+
+            field: new defs.Square(),
+            healthbar: new defs.Cube(),
+            levelup_menu: new defs.Cube(),
+
+
         };
 
         const textured = new defs.Textured_Phong(1);
@@ -80,6 +85,9 @@ export class Polygon_Survivors extends Scene {
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/tile_texture.jpeg", "LINEAR_MIPMAP_LINEAR")}),
+            start_menu: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
+
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -133,9 +141,23 @@ export class Polygon_Survivors extends Scene {
         // Customize this method to draw your start screen
         // For example, you can draw a message or an image indicating the start screen
         let model_transform = Mat4.identity();
-        model_transform = this.set_initial_background(context, program_state, model_transform);
+        this.set_initial_background(context, program_state, model_transform);
+
+        let start_menu_transform = model_transform.times(Mat4.scale(6, 2, 0, 0)).times(Mat4.translation(0, 0, 1));
+        this.shapes.square.draw(context, program_state, start_menu_transform, this.materials.start_menu);
 
         // Draw start screen content
+    }
+
+    draw_levelup_screen(context, program_state){
+        let model_transform = Mat4.identity();
+        this.set_initial_background(context, program_state, model_transform);
+
+        let levelup_menu_transform = model_transform.times(Mat4.scale(10, 15, 0, 0)).times(Mat4.translation(0, 0, 1));
+        this.shapes.square.draw(context, program_state, levelup_menu_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+    }
+
+    draw_start_menu(context, program_state, model_transform, t){
     }
 
     draw_player(context, program_state, model_transform){
@@ -230,6 +252,10 @@ export class Polygon_Survivors extends Scene {
                 this.player.takeDamage(1);
                 //element.takeDamage(10);
                 console.log("Player took 1 damage! Health: " + this.player.health);
+                if(this.player.health <= 0){
+                    this.start_screen = true;
+                    this.cleanup_game();
+                }
                 // For example, reset the player's position
                 //this.player_transform = Mat4.identity();
             }
@@ -251,6 +277,8 @@ export class Polygon_Survivors extends Scene {
                     this.player.curr_xp += 1;
                     if (this.player.curr_xp === this.player.levelup_xp) {
                         this.player.level += 1;
+
+                        this.upgrade_gear();
                         this.levelup_state = true;
 
                         this.player.levelup_xp += 5;
@@ -321,7 +349,7 @@ export class Polygon_Survivors extends Scene {
 
     set_initial_background(context, program_state, model_transform){
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
-            .times(Mat4.scale(50,50,0.1));
+            .times(Mat4.scale(50,50,0, 0));
         this.shapes.field.draw(context, program_state, model_transform, this.materials.grass);
 
         return model_transform;
@@ -333,6 +361,21 @@ export class Polygon_Survivors extends Scene {
         this.sword_stats.rotation_speed -= 0.1;
     }
 
+    cleanup_game(){
+        this.player.level = 1;
+        this.player.curr_xp = 0;
+        this.player.levelup_xp = 5;
+        this.player.transform = Mat4.identity();
+        this.velocity = [0,0];
+        this.speed = 0.08;
+
+        enemies = [];
+
+        this.sword_stats.length = 2;
+        this.sword_stats.rotation_speed = 1;
+        this.sword_stats.damage = 1;
+    }
+
     display(context, program_state) {
         let canvas = context.canvas;
         const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
@@ -341,7 +384,12 @@ export class Polygon_Survivors extends Scene {
 
         canvas.addEventListener("mousedown", e => {
             e.preventDefault();
-            this.start_screen = false;
+            if (this.start_screen) {
+                this.start_screen = false;
+            }
+            if(this.levelup_state) {
+                this.levelup_state = false;
+            }
             const rect = canvas.getBoundingClientRect()
             console.log("e.clientX: " + e.clientX);
             console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
@@ -369,8 +417,17 @@ export class Polygon_Survivors extends Scene {
 
         if (this.start_screen) {
             this.draw_start_screen(context, program_state);
-        } else {
+        }
+        else if(this.levelup_state) {
+            this.draw_levelup_screen(context, program_state);
+        }
+        else {
             model_transform = this.set_initial_background(context, program_state, model_transform);
+            //move player based on keypress
+            this.player.transform = this.draw_player(context, program_state, this.player.transform);
+            model_transform = this.set_initial_background(context, program_state, model_transform);
+
+
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
@@ -379,11 +436,6 @@ export class Polygon_Survivors extends Scene {
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, t);
-
-            if (this.levelup_state) {
-                this.upgrade_gear();
-                this.levelup_state = false;
-            }
         }
     }
 }
