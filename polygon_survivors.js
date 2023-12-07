@@ -255,13 +255,13 @@ export class Polygon_Survivors extends Scene {
         lasers_left.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
+                .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
         lasers_right.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
+                .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
 
@@ -280,7 +280,7 @@ export class Polygon_Survivors extends Scene {
             let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
             element.transform = laser_transform.times(Mat4.translation(-laser_x, laser_y, 0));
 
-            if (laser_pos.x < -20){
+            if (laser_pos.x < -70){
                 element.onDeath();
                 toRemoveLeft.push(index);
             }
@@ -290,7 +290,7 @@ export class Polygon_Survivors extends Scene {
             let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
             element.transform = laser_transform.times(Mat4.translation(laser_x, laser_y, 0));
 
-            if (laser_pos.x > 20){
+            if (laser_pos.x > 70){
                 element.onDeath();
                 toRemoveRight.push(index);
             }
@@ -374,11 +374,18 @@ export class Polygon_Survivors extends Scene {
             let laser_collision = lasers_right;
             laser_collision.forEach((laser) =>{
                 let laser_transform = laser.transform;
-                if (this.check_collision(element.transform, laser_transform, 1)){
+                if (this.check_collision(element.transform, laser_transform, 1)) {
                     element.takeDamage(this.laser_stats.damage);
                     element.hit = true;
                 }
-
+            })
+            laser_collision = lasers_left;
+            laser_collision.forEach((laser) =>{
+                let laser_transform = laser.transform;
+                if (this.check_collision(element.transform, laser_transform, 1)) {
+                    element.takeDamage(this.laser_stats.damage);
+                    element.hit = true;
+                }
             })
 
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
