@@ -105,6 +105,7 @@ export class Polygon_Survivors extends Scene {
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
+            sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword.png", "LINEAR_MIPMAP_LINEAR")}),
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -267,13 +268,13 @@ export class Polygon_Survivors extends Scene {
         lasers_left.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
+                .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
         lasers_right.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(0.5, 0.5, 0.5)); // Adjust scale as needed
+                .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
             this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
         });
 
@@ -292,7 +293,7 @@ export class Polygon_Survivors extends Scene {
             let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
             element.transform = laser_transform.times(Mat4.translation(-laser_x, laser_y, 0));
 
-            if (laser_pos.x < -20){
+            if (laser_pos.x < -70){
                 element.onDeath();
                 toRemoveLeft.push(index);
             }
@@ -302,7 +303,7 @@ export class Polygon_Survivors extends Scene {
             let laser_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
             element.transform = laser_transform.times(Mat4.translation(laser_x, laser_y, 0));
 
-            if (laser_pos.x > 20){
+            if (laser_pos.x > 70){
                 element.onDeath();
                 toRemoveRight.push(index);
             }
@@ -480,6 +481,19 @@ export class Polygon_Survivors extends Scene {
         return model_transform;
     }
 
+    draw_loadout(context, program_state) {
+        // Draw the initial background
+        let model_transform = Mat4.identity();
+        this.set_initial_background(context, program_state, model_transform);
+
+        // Draw a square at the top-left corner of the screen
+        let square_transform = model_transform
+            .times(Mat4.translation(-30, 20, 0))
+            .times(Mat4.scale(2, 2, 0));
+        console.log(square_transform);
+        this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
+    }
+
     upgrade_gear(){
         this.sword_stats.length += 0.2;
         this.sword_stats.damage += 1;
@@ -553,10 +567,12 @@ export class Polygon_Survivors extends Scene {
         }
         else {
             model_transform = this.set_initial_background(context, program_state, model_transform);
+
+            //draws weapon tray
+            this.draw_loadout(context, program_state)
+
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
-
-
 
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
