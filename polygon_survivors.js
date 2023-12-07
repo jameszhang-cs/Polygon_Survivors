@@ -84,7 +84,7 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
-            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/tile_texture.jpeg", "LINEAR_MIPMAP_LINEAR")}),
+            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
 
@@ -92,7 +92,7 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 40), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
