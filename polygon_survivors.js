@@ -17,6 +17,8 @@ const MAX_HEALTH = 100
 
 let enemies = [];
 
+const orbs = [];
+
 export class Polygon_Survivors extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -51,6 +53,7 @@ export class Polygon_Survivors extends Scene {
         this.weapon_polys = {
             sword: new Shape_From_File("./assets/sword.obj"),
             rect: new defs.Cube(),
+            circle: new defs.Subdivision_Sphere(4),
         }
 
         this.sword_transform1 = Mat4.identity();
@@ -84,6 +87,8 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
+            orb: new Material(new defs.Phong_Shader(),
+                {ambient: 0.7, color: hex_color("#A9423F")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
@@ -198,6 +203,21 @@ export class Polygon_Survivors extends Scene {
 
         this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword);
         this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword);
+
+    }
+
+    draw_orb(context, program_state, model_transform, t){
+        let orb_x = t%10;
+        let parabola = -orb_x * orb_x;
+
+        this.orb_transform = model_transform.times(Mat4.translation(0, 0, 10)
+            .times(Mat4.scale(1,1,1)));
+
+        this.weapon_polys.circle.draw(context, program_state, this.orb_transform, this.materials.orb);
+        orbs.forEach((element, index) =>{
+
+
+        })
 
     }
 
@@ -432,7 +452,9 @@ export class Polygon_Survivors extends Scene {
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
             //draw swords around player
-            this.draw_sword(context, program_state, this.player.transform, t)
+            this.draw_sword(context, program_state, this.player.transform, t);
+
+            this.draw_orb(context, program_state, this.player.transform);
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, t);
