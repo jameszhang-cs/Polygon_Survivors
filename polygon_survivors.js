@@ -23,6 +23,7 @@ let orbs = [];
 let lasers_left = [];
 let lasers_right = [];
 
+let levelup_opts = [];
 
 export class Polygon_Survivors extends Scene {
     constructor() {
@@ -180,6 +181,10 @@ export class Polygon_Survivors extends Scene {
         // Rectangle 3
         let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(5, 0, 1));
         this.shapes.square.draw(context, program_state, opt3_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+    }
+
+    choose_levelup(x, y) {
+
     }
 
     draw_start_menu(context, program_state, model_transform, t){
@@ -521,9 +526,6 @@ export class Polygon_Survivors extends Scene {
             if (this.start_screen) {
                 this.start_screen = false;
             }
-            if(this.levelup_state) {
-                this.levelup_state = false;
-            }
             const rect = canvas.getBoundingClientRect()
             console.log("e.clientX: " + e.clientX);
             console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
@@ -531,6 +533,10 @@ export class Polygon_Survivors extends Scene {
             console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
             console.log("mouse_position(e): " + mouse_position(e));
             this.my_mouse_down(e, mouse_position(e), context, program_state);
+            if(this.levelup_state) {
+                this.levelup_state = false;
+                this.choose_levelup(mouse_position(e)[0], mouse_position(e)[1]);
+            }
         });
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
