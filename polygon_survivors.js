@@ -34,6 +34,9 @@ export class Polygon_Survivors extends Scene {
         this.mousex;
         this.mousey;
 
+        this.orb_itnum = 0;
+        this.orb_neg = -1;
+
         this.start_screen = true;
 
         this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
@@ -240,20 +243,7 @@ export class Polygon_Survivors extends Scene {
 
     }
 
-    draw_orb(context, program_state, model_transform, t){
-        let orb_x = t%10;
-        let parabola = -orb_x * orb_x;
 
-        this.orb_transform = model_transform.times(Mat4.translation(0, 0, 10)
-            .times(Mat4.scale(1,1,1)));
-
-        this.weapon_polys.circle.draw(context, program_state, this.orb_transform, this.materials.orb);
-        orbs.forEach((element, index) =>{
-
-
-        })
-
-    }
 
     draw_laser(context, program_state, model_transform, t){
         let count = t / 2  ;
@@ -278,6 +268,22 @@ export class Polygon_Survivors extends Scene {
         });
 
         this.update_laser_locations();
+
+    }
+
+    draw_orb(context, program_state, model_transform, t){
+        let count = t / 2  ;
+        if (count > orbs.length && orbs.length < 1) {
+            orbs.push(new Projectile(MAX_HEALTH, model_transform));
+        }
+
+        orbs.forEach((element) =>{
+            let orb_transform = element.transform.times(Mat4.translation(0, 0, 10));
+            this.weapon_polys.circle.draw(context, program_state, orb_transform, this.materials.orb);
+
+        })
+
+        this.update_orb_locations(t);
 
     }
 
@@ -313,6 +319,45 @@ export class Polygon_Survivors extends Scene {
         for (let i = toRemoveRight.length - 1; i >= 0; i--) {
             lasers_right.splice(toRemoveRight [i], 1);
         }
+    }
+
+    update_orb_locations(t){
+        let toRemove = [];
+
+
+
+        this.orb_neg = -1;
+        let orb_x = this.orb_itnum * this.orb_neg;
+        this.orb_itnum = this.orb_itnum + (this.orb_neg * 0.05);
+
+
+        let a = 2;
+        let b = 8;
+        let c = 0;
+        let orb_y = (-a * orb_x * orb_x) + (b * orb_x) + c ;
+        let dy = -2 * a * orb_x + b;
+        let vertex = -b/2*a;
+        orbs.forEach((element, index) => {
+            let orb_transform = element.transform;
+            let orb_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
+            element.transform = orb_transform.times(Mat4.translation(orb_x/15, dy/15, 0));
+            if (orb_pos.x > 40 || orb_pos.y > 40){
+                this.orb_neg = -1;
+                element.onDeath();
+                this.orb_itnum = 0;
+                toRemove.push(index);
+                let rand = getRandomInteger(1, 3);
+                if (rand === 1){
+                    this.orb_neg = -1;
+                }else{
+                    this.orb_neg = 1;
+                }
+            }
+        })
+        for (let i = toRemove.length - 1; i >= 0; i--) {
+            orbs.splice(toRemove [i], 1);
+        }
+
     }
 
     check_collision(obj1_transform, obj2_transform, radius) {
