@@ -103,8 +103,7 @@ export class Polygon_Survivors extends Scene {
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
-            start_menu: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
+            start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword.png", "LINEAR_MIPMAP_LINEAR")}),
         }
 
