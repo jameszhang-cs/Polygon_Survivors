@@ -18,6 +18,7 @@ const MAX_HEALTH = 100
 let enemies = [];
 
 let edge = 0;
+let start_time = 0;
 
 let orbs = [];
 let lasers_left = [];
@@ -175,7 +176,7 @@ export class Polygon_Survivors extends Scene {
         this.set_initial_background(context, program_state, model_transform);
         // Rectangle 1
         let opt1_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(-5, 0, 1));
-        this.shapes.square.draw(context, program_state, opt1_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+        this.shapes.square.draw(context, program_state, opt1_transform, this.materials.sword_icon.override({color: hex_color("#d0c9bf")}));
 
         // Rectangle 2
         let opt2_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(0, 0, 1));
@@ -534,7 +535,7 @@ export class Polygon_Survivors extends Scene {
         let square_transform = model_transform
             .times(Mat4.translation(-30, 20, 0))
             .times(Mat4.scale(2, 2, 0));
-        console.log(square_transform);
+        //console.log(square_transform);
         this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
     }
 
@@ -600,16 +601,20 @@ export class Polygon_Survivors extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        let round_time = t - start_time;
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
         if (this.start_screen) {
             this.draw_start_screen(context, program_state);
+            start_time = t;
+            console.log("start time reset to: " + start_time);
         }
         else if(this.levelup_state) {
             this.draw_levelup_screen(context, program_state);
         }
         else {
+            console.log("round time is: " + round_time);
             model_transform = this.set_initial_background(context, program_state, model_transform);
 
             //draws weapon tray
@@ -622,16 +627,16 @@ export class Polygon_Survivors extends Scene {
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
             //draw swords around player
-            this.draw_sword(context, program_state, this.player.transform, t);
+            this.draw_sword(context, program_state, this.player.transform, round_time);
 
             //draw orbs
-            this.draw_orb(context, program_state, this.player.transform, t);
+            this.draw_orb(context, program_state, this.player.transform, round_time);
 
             //draw laser projectiles
-            this.draw_laser(context, program_state, this.player.transform, t);
+            this.draw_laser(context, program_state, this.player.transform, round_time);
 
             //generate and draw enemies
-            this.generate_enemies(context, program_state, model_transform, t);
+            this.generate_enemies(context, program_state, model_transform, round_time);
         }
     }
 }
