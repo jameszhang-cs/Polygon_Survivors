@@ -13,10 +13,10 @@ const MIN_X = -20;
 const MAX_Y = 20
 const MIN_Y = -20
 const PROJ_Z = 1
-const MAX_HEALTH = 100
+const MAX_HEALTH = 10
 
 let enemies = [];
-
+let edge = 0;
 const orbs = [];
 
 export class Polygon_Survivors extends Scene {
@@ -92,7 +92,6 @@ export class Polygon_Survivors extends Scene {
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#2fa62f")}),
-
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -154,12 +153,21 @@ export class Polygon_Survivors extends Scene {
         // Draw start screen content
     }
 
-    draw_levelup_screen(context, program_state){
-        let model_transform = Mat4.identity();
+    draw_levelup_screen(context, program_state) {
+        // Draw three squares spaced evenly on the screen
+        let model_transform = Mat4.identity()
         this.set_initial_background(context, program_state, model_transform);
+        // Rectangle 1
+        let opt1_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(-5, 0, 1));
+        this.shapes.square.draw(context, program_state, opt1_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
 
-        let levelup_menu_transform = model_transform.times(Mat4.scale(10, 15, 0, 0)).times(Mat4.translation(0, 0, 1));
-        this.shapes.square.draw(context, program_state, levelup_menu_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+        // Rectangle 2
+        let opt2_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(0, 0, 1));
+        this.shapes.square.draw(context, program_state, opt2_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
+
+        // Rectangle 3
+        let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(5, 0, 1));
+        this.shapes.square.draw(context, program_state, opt3_transform, this.materials.start_menu.override({color: hex_color("#d0c9bf")}));
     }
 
     draw_start_menu(context, program_state, model_transform, t){
@@ -221,14 +229,14 @@ export class Polygon_Survivors extends Scene {
 
     }
 
-    check_collision(obj1_transform, obj2_transform) {
+    check_collision(obj1_transform, obj2_transform, radius) {
         // Get the positions of the player and projectile
         const obj1_position = vec3(obj1_transform[0][3], obj1_transform[1][3], obj1_transform[2][3]);
         const obj2_position = vec3(obj2_transform[0][3], obj2_transform[1][3], obj2_transform[2][3]);
 
         // Define the radii of the spheres for collision detection
-        const obj1_radius = 1.5; // Adjust as needed
-        const obj2_radius = 1.5; // Adjust as needed
+        const obj1_radius = radius; // Adjust as needed
+        const obj2_radius = radius; // Adjust as needed
 
         // Calculate the distance between the centers of the spheres
         const distance = Math.sqrt(
@@ -267,7 +275,7 @@ export class Polygon_Survivors extends Scene {
                 .times(Mat4.rotation(angleDifference, 0, 0, 1))
                 .times(Mat4.translation(0.01, 0.01, 0));
 
-            if (this.check_collision(this.player.transform, element.transform)) {
+            if (this.check_collision(this.player.transform, element.transform, 1.5)) {
                 // Handle player death (you can customize this part)
                 this.player.takeDamage(1);
                 //element.takeDamage(10);
@@ -318,18 +326,22 @@ export class Polygon_Survivors extends Scene {
         let count = t / 2 + 1;
         if (count > enemies.length) {
             let proj_transform = Mat4.identity();
-            let edge = count % 4;
-            if (edge < 1) {
+            let spawn = edge % 4;
+            if (spawn < 1) {
                 console.log("case 0");
+                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MAX_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
-            } else if (edge < 2) {
+            } else if (spawn < 2) {
                 console.log("case 1");
+                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MAX_Y, PROJ_Z));
-            } else if (edge < 3) {
+            } else if (spawn < 3) {
                 console.log("case 2");
+                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + MIN_X, this.player.transform[1][3] + getRandomInteger(MIN_Y, MAX_Y), PROJ_Z));
             } else {
                 console.log("case 3");
+                edge++;
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
             enemies.push(new Enemy(MAX_HEALTH, proj_transform));
@@ -416,7 +428,6 @@ export class Polygon_Survivors extends Scene {
             console.log("e.clientY: " + e.clientY);
             console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
             console.log("mouse_position(e): " + mouse_position(e));
-            console.log("start screen is: " + this.start_screen);
             this.my_mouse_down(e, mouse_position(e), context, program_state);
         });
         if (!context.scratchpad.controls) {
