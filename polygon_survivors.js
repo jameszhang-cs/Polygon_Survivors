@@ -23,6 +23,9 @@ export class Polygon_Survivors extends Scene {
         super();
         this.dir = "";
 
+        this.mousex;
+        this.mousey;
+
         this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
 
         this.player_polys = {
@@ -102,6 +105,25 @@ export class Polygon_Survivors extends Scene {
         }, "#ff0000", function () {
             this.player.velocity[1] = 0;
         });
+
+    }
+
+    my_mouse_down(e, pos, context, program_state) {
+        let pos_ndc_near = vec4(pos[0], pos[1], -1.0, 1.0);
+        let pos_ndc_far  = vec4(pos[0], pos[1],  1.0, 1.0);
+        let center_ndc_near = vec4(0.0, 0.0, -1.0, 1.0);
+        let P = program_state.projection_transform;
+        let V = program_state.camera_inverse;
+        let pos_world_near = Mat4.inverse(P.times(V)).times(pos_ndc_near);
+        let pos_world_far  = Mat4.inverse(P.times(V)).times(pos_ndc_far);
+        let center_world_near  = Mat4.inverse(P.times(V)).times(center_ndc_near);
+        pos_world_near.scale_by(1 / pos_world_near[3]);
+        pos_world_far.scale_by(1 / pos_world_far[3]);
+        center_world_near.scale_by(1 / center_world_near[3]);
+        // console.log(pos_world_near);
+        // console.log(pos_world_far);
+        //
+        // MOUSE PICKING POSITION IS ON 1 by 1 COORD
 
     }
 
@@ -318,6 +340,21 @@ export class Polygon_Survivors extends Scene {
         //generate and draw enemies
         this.generate_enemies(context, program_state, model_transform, t);
 
+        let canvas = context.canvas;
+        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
+
+        canvas.addEventListener("mousedown", e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect()
+            console.log("e.clientX: " + e.clientX);
+            console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            console.log("e.clientY: " + e.clientY);
+            console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            console.log("mouse_position(e): " + mouse_position(e));
+            this.my_mouse_down(e, mouse_position(e), context, program_state);
+        });
     }
 }
 
