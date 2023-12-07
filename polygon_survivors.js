@@ -26,6 +26,8 @@ export class Polygon_Survivors extends Scene {
         this.mousex;
         this.mousey;
 
+        this.start_screen = true;
+
         this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
         this.levelup_state = false;
 
@@ -126,6 +128,14 @@ export class Polygon_Survivors extends Scene {
         //
         // MOUSE PICKING POSITION IS ON 1 by 1 COORD
 
+    }
+    draw_start_screen(context, program_state) {
+        // Customize this method to draw your start screen
+        // For example, you can draw a message or an image indicating the start screen
+        let model_transform = Mat4.identity();
+        model_transform = this.set_initial_background(context, program_state, model_transform);
+
+        // Draw start screen content
     }
 
     draw_player(context, program_state, model_transform){
@@ -324,8 +334,23 @@ export class Polygon_Survivors extends Scene {
     }
 
     display(context, program_state) {
-        // display():  Called once per frame of animation.
-        // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+        let canvas = context.canvas;
+        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
+            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
+                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
+
+        canvas.addEventListener("mousedown", e => {
+            e.preventDefault();
+            this.start_screen = false;
+            const rect = canvas.getBoundingClientRect()
+            console.log("e.clientX: " + e.clientX);
+            console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
+            console.log("e.clientY: " + e.clientY);
+            console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
+            console.log("mouse_position(e): " + mouse_position(e));
+            console.log("start screen is: " + this.start_screen);
+            this.my_mouse_down(e, mouse_position(e), context, program_state);
+        });
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
@@ -342,37 +367,24 @@ export class Polygon_Survivors extends Scene {
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
-        model_transform = this.set_initial_background(context, program_state, model_transform);
+        if (this.start_screen) {
+            this.draw_start_screen(context, program_state);
+        } else {
+            model_transform = this.set_initial_background(context, program_state, model_transform);
+            //move player based on keypress
+            this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
-        //move player based on keypress
-        this.player.transform = this.draw_player(context, program_state, this.player.transform);
+            //draw swords around player
+            this.draw_sword(context, program_state, this.player.transform, t)
 
-        //draw swords around player
-        this.draw_sword(context, program_state, this.player.transform, t)
+            //generate and draw enemies
+            this.generate_enemies(context, program_state, model_transform, t);
 
-        //generate and draw enemies
-        this.generate_enemies(context, program_state, model_transform, t);
-
-        if (this.levelup_state) {
-            this.upgrade_gear();
-            this.levelup_state = false;
+            if (this.levelup_state) {
+                this.upgrade_gear();
+                this.levelup_state = false;
+            }
         }
-
-        let canvas = context.canvas;
-        const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
-            vec((e.clientX - (rect.left + rect.right) / 2) / ((rect.right - rect.left) / 2),
-                (e.clientY - (rect.bottom + rect.top) / 2) / ((rect.top - rect.bottom) / 2));
-
-        canvas.addEventListener("mousedown", e => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect()
-            console.log("e.clientX: " + e.clientX);
-            console.log("e.clientX - rect.left: " + (e.clientX - rect.left));
-            console.log("e.clientY: " + e.clientY);
-            console.log("e.clientY - rect.top: " + (e.clientY - rect.top));
-            console.log("mouse_position(e): " + mouse_position(e));
-            this.my_mouse_down(e, mouse_position(e), context, program_state);
-        });
     }
 }
 
