@@ -75,7 +75,7 @@ export class Polygon_Survivors extends Scene {
         }
 
         this.orb_stats = {
-            damage: 15,
+            damage: 10,
             radius: 1
         }
 
@@ -133,7 +133,7 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 40), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 55), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -375,7 +375,7 @@ export class Polygon_Survivors extends Scene {
         }
 
         orbs.forEach((element) =>{
-            let orb_transform = element.transform.times(Mat4.translation(0, 0, 10))
+            let orb_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
                 .times(Mat4.scale(this.orb_stats.radius, this.orb_stats.radius, this.orb_stats.radius));
             this.weapon_polys.circle.draw(context, program_state, orb_transform, this.materials.orb);
 
@@ -423,9 +423,9 @@ export class Polygon_Survivors extends Scene {
 
 
 
-        this.orb_neg = -1;
-        let orb_x = this.orb_itnum * this.orb_neg;
-        this.orb_itnum = this.orb_itnum + (this.orb_neg * 0.05);
+
+        let orb_x = this.orb_itnum ;
+        this.orb_itnum = this.orb_itnum + (0.05);
 
 
         let a = 2;
@@ -437,13 +437,12 @@ export class Polygon_Survivors extends Scene {
         orbs.forEach((element, index) => {
             let orb_transform = element.transform;
             let orb_pos = {x: element.transform[0][3], y: element.transform[1][3], z: element.transform[2][3]};
-            element.transform = orb_transform.times(Mat4.translation(orb_x/15, dy/15, 0));
-            if (orb_pos.x > 40 || orb_pos.y > 40){
-                this.orb_neg = -1;
+            element.transform = orb_transform.times(Mat4.translation(this.orb_neg * orb_x/15, dy/15, 0));
+            if (orb_pos.x > 40 || orb_pos.y < -40){
                 element.onDeath();
                 this.orb_itnum = 0;
                 toRemove.push(index);
-                let rand = getRandomInteger(1, 3);
+                let rand = getRandomInteger(1, 2);
                 if (rand === 1){
                     this.orb_neg = -1;
                 }else{
@@ -528,6 +527,13 @@ export class Polygon_Survivors extends Scene {
             lasers_left.forEach((laser) =>{
                 if (this.check_collision(element.transform, laser.transform, 1)){
                     element.takeDamage(this.laser_stats.damage);
+                    element.hit = true;
+                }
+            })
+
+            orbs.forEach((orb)=>{
+                if (this.check_collision(element.transform, orb.transform, this.orb_stats.radius)){
+                    element.takeDamage(this.orb_stats.damage);
                     element.hit = true;
                 }
             })
