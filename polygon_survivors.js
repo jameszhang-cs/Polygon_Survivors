@@ -38,7 +38,7 @@ let upgrades = [
     "upgrade meteor",
 ];
 
-//sword, laser, orb
+//sword, laser, orb, meteor
 let weapon_levels = [1, 0, 0];
 
 let player_weapons = [];
@@ -60,6 +60,7 @@ export class Polygon_Survivors extends Scene {
         this.meteor_y = 2;
 
         this.meteor_aoe_timer = 0;
+        this.meteor_timer_cap = 50;
         this.meteor_aoe_count = 0;
         this.meteor_land_x = 0;
         this.meteor_land_y = 0;
@@ -418,7 +419,10 @@ export class Polygon_Survivors extends Scene {
                 break;
             case "upgrade meteor":
                 this.meteor_stats.radius += 0.5;
+
                 this.meteor_stats.damage += 1;
+                this.meteor_timer_cap += 5;
+
                 break;
         }
     }
@@ -687,7 +691,7 @@ export class Polygon_Survivors extends Scene {
         let toRemove = [];
         meteor_aoe.forEach((meteor, index) =>{
             this.meteor_aoe_timer ++;
-            if (this.meteor_aoe_timer > 50){
+            if (this.meteor_aoe_timer > this.meteor_timer_cap){
                 this.meteor_aoe_timer = 0;
                 toRemove.push(index);
                 this.meteor_aoe_count --;
