@@ -1081,7 +1081,24 @@ export class Polygon_Survivors extends Scene {
 
         this.sword_stats.length = 2;
         this.sword_stats.rotation_speed = 1;
-        this.sword_stats.damage = 1;
+        this.sword_stats.damage = 3;
+        this.sword_stats.life_steal = 0;
+
+        this.laser_stats.damage = 15;
+        this.laser_stats.length = 1.5;
+        this.laser_stats.rate = 1;
+
+        this.orb_stats.damage = 7;
+        this.orb_stats.radius = 1.5;
+
+        this.meteor_stats.damage = 1.5;
+        this.meteor_stats.radius = 3;
+
+        weapon_levels[0] = 0;
+        weapon_levels[1] = 0;
+        weapon_levels[2] = 0;
+
+
     }
 
     draw_light(model_transform, program_state){
@@ -1128,7 +1145,7 @@ export class Polygon_Survivors extends Scene {
             }
         });
         if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            //this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
