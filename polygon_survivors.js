@@ -827,6 +827,9 @@ export class Polygon_Survivors extends Scene {
             if (!element.alive){
                 toRemove.push(index);
                 this.player.curr_xp += 1;
+                if (element.level > 1){
+                    this.player.curr_xp += element.level/2;
+                }
                 if (this.player.curr_xp === this.player.levelup_xp) {
                     this.player.level += 1;
                     this.levelup_state = true;
