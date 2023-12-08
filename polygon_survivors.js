@@ -1177,10 +1177,14 @@ export class Polygon_Survivors extends Scene {
                 this.draw_laser(context, program_state, this.player.transform, t);
             }
 
-            if(this.player.meteor) {
-                this.draw_meteor(context, program_state, Mat4.identity(), t);
+            //if(this.player.meteor) {
+                let meteor_spawn = Mat4.identity();
+                let rand_x = getRandomInteger(-5,5);
+                let rand_y = getRandomInteger(-5,5);
+                meteor_spawn = meteor_spawn.times(Mat4.translation(rand_x, rand_y, 0));
+                this.draw_meteor(context, program_state, meteor_spawn, t);
                 this.draw_meteor_aoe(context, program_state, Mat4.identity());
-            }
+            //}
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, round_time);
         }
