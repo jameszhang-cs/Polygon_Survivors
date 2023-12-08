@@ -51,6 +51,7 @@ export class Polygon_Survivors extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.dir = "";
+        this.highscore = 1;
 
         this.orb_itnum = 0;
         this.orb_neg = -1;
@@ -64,7 +65,6 @@ export class Polygon_Survivors extends Scene {
         this.meteor_aoe_count = 0;
         this.meteor_land_x = 0;
         this.meteor_land_y = 0;
-
 
         this.start_screen = true;
 
@@ -820,6 +820,9 @@ export class Polygon_Survivors extends Scene {
                 this.player.curr_xp += 1;
                 if (this.player.curr_xp === this.player.levelup_xp) {
                     this.player.level += 1;
+                    if (this.player.level > this.highscore) {
+                        this.highscore = this.player.level;
+                    }
                     this.levelup_state = true;
                     levelup_opts = this.gen_levelup_opts();
                     console.log(levelup_opts);
@@ -1016,7 +1019,7 @@ export class Polygon_Survivors extends Scene {
         let level_transform = model_transform
             .times(Mat4.translation(-5, 19, 5));
 
-        let level_str = "Level: " + this.player.level;
+        let level_str = "Level: " + this.player.level + "      High score: " + this.highscore;
         console.log(level_str);
         this.shapes.text.set_string(level_str, context.context);
         this.shapes.text.draw(context, program_state, level_transform, this.materials.text_image);
