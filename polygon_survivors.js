@@ -103,7 +103,7 @@ export class Polygon_Survivors extends Scene {
             radius: 1.5
         }
         this.meteor_stats = {
-            damage: 30,
+            damage: 1,
             radius: 3,
         }
 
@@ -418,7 +418,7 @@ export class Polygon_Survivors extends Scene {
                 break;
             case "upgrade meteor":
                 this.meteor_stats.radius += 0.5;
-                this.meteor_stats.damage += 2;
+                this.meteor_stats.damage += 1;
                 break;
         }
     }
@@ -555,7 +555,8 @@ export class Polygon_Survivors extends Scene {
 
         meteors.forEach((element) =>{
             let meteor_transform = element.transform.times(Mat4.translation(0, 0, 70))
-                .times(Mat4.scale(this.meteor_stats.radius, this.meteor_stats.radius, this.meteor_stats.radius));
+                .times(Mat4.scale(this.meteor_stats.radius, this.meteor_stats.radius, this.meteor_stats.radius))
+                .times (Mat4.rotation(2*t, 0, 0, 1));
             this.weapon_polys.circle.draw(context, program_state, meteor_transform, this.materials.meteor);
 
         })
@@ -770,7 +771,7 @@ export class Polygon_Survivors extends Scene {
             meteor_aoe.forEach((meteor)=>{
 
                 if (this.check_collision(element.transform, meteor.transform, this.meteor_stats.radius*1.2)){
-                    element.takeDamage(0.5);
+                    element.takeDamage(this.meteor_stats.damage);
                     element.hit = true;
                 }
 
@@ -883,7 +884,7 @@ export class Polygon_Survivors extends Scene {
                     enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
                 }
             }
-            else if(this.player.level === 4){
+            else if(this.player.level >= 4 && this.player.level < 7){
                 let index = Math.floor(Math.random() * 4);
 
                 if(index < 2){
@@ -893,7 +894,7 @@ export class Polygon_Survivors extends Scene {
                     enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
                 }
             }
-            else if(this.player.level > 4){
+            else if(this.player.level >= 7){
                 //enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
                 let index = Math.floor(Math.random() * 4);
 
