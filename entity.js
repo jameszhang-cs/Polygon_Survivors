@@ -30,6 +30,7 @@ export class Player extends Entity {
         this.velocity = velocity;
         this.speed = speed;
         this.level = level;
+        this.direction = 0;
 
         this.levelup_xp = 5;
         this.curr_xp = 0;
@@ -37,6 +38,7 @@ export class Player extends Entity {
         this.sword = true;
         this.laser = false;
         this.orb = false;
+        this.meteor = false;
     }
 
     levelUp() {

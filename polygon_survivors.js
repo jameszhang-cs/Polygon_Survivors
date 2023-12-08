@@ -70,7 +70,7 @@ export class Polygon_Survivors extends Scene {
         this.evolve_sword = false;
 
         this.player_polys = {
-            model: new Shape_From_File("./assets/model.obj"),
+            model: new Shape_From_File("./assets/player.obj"),
             head: new defs.Subdivision_Sphere(4),
             body: new defs.Cube(),
         }
@@ -81,12 +81,10 @@ export class Polygon_Survivors extends Scene {
             horn: new defs.Closed_Cone(50, 50, [[0, 2], [0, 1]]),
 
             type1: new Shape_From_File("./assets/model.obj"),
-            type2: new Shape_From_File("./assets/model.obj"),
-            type3: new Shape_From_File("./assets/model.obj"),
         }
 
         this.sword_stats = {
-            damage: 2,
+            damage: 3,
             rotation_speed: 1,
             length: 2,
             life_steal: 0,
@@ -100,7 +98,7 @@ export class Polygon_Survivors extends Scene {
 
         this.orb_stats = {
             damage: 7,
-            radius: 1
+            radius: 1.5
         }
         this.meteor_stats = {
             damage: 30,
@@ -109,7 +107,9 @@ export class Polygon_Survivors extends Scene {
 
 
         this.weapon_polys = {
-            sword: new Shape_From_File("./assets/sword.obj"),
+            sword: new Shape_From_File("./assets/shortsword.obj"),
+            axe: new Shape_From_File("./assets/Hazard_Saw.obj"),
+
             rect: new defs.Cube(),
             circle: new defs.Subdivision_Sphere(3),
             circle4: new defs.Subdivision_Sphere(4),
@@ -143,11 +143,11 @@ export class Polygon_Survivors extends Scene {
             enemy: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#4397ce")}),
             player: new Material(new defs.Phong_Shader(),
-                {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#75529d")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
             orb: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#ff4c34")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#858080")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             meteor: new Material(new Gouraud_Shader(),
@@ -158,7 +158,7 @@ export class Polygon_Survivors extends Scene {
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
             laser_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/kraken.png")}),
-            orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
+            orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/axe.png")}),
             evolved_sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/bt.png")}),
             text_image: new Material(textured, {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
 
@@ -172,13 +172,17 @@ export class Polygon_Survivors extends Scene {
     make_control_panel() {
         this.key_triggered_button("left", ["j"], function () {
             this.player.velocity[0] = -1;
+            this.player.direction = -1;
         }, "#ff0000", function () {
             this.player.velocity[0] = 0;
+            this.player.direction = 0;
         });
         this.key_triggered_button("right", ["l"], function () {
             this.player.velocity[0] = 1;
+            this.player.direction = 1;
         }, "#ff0000", function () {
             this.player.velocity[0] = 0;
+            this.player.direction = 0;
         });
         this.key_triggered_button("up", ["i"], function () {
             this.player.velocity[1] = 1;
@@ -268,7 +272,7 @@ export class Polygon_Survivors extends Scene {
             }
             else if(levelup_opts[i] === "new orb"){
                 materials.push(this.materials.orb_icon);
-                this.shapes.text.set_string("UNLOCK ORB", context.context);
+                this.shapes.text.set_string("UNLOCK AXE", context.context);
                 if (i === 0) {
                     this.shapes.text.draw(context, program_state, opt1_text_transform.times(Mat4.translation(-6.67, 0, 0)), this.materials.text_image);
                 } else {
@@ -277,7 +281,7 @@ export class Polygon_Survivors extends Scene {
             }
             else if(levelup_opts[i] === "upgrade orb"){
                 materials.push(this.materials.orb_icon);
-                this.shapes.text.set_string("UPGRADE ORB", context.context);
+                this.shapes.text.set_string("UPGRADE AXE", context.context);
                 if (i === 0) {
                     this.shapes.text.draw(context, program_state, opt1_text_transform.times(Mat4.translation(-7.33, 0, 0)), this.materials.text_image);
                 } else {
@@ -406,14 +410,19 @@ export class Polygon_Survivors extends Scene {
         let player_transform = model_transform.times(Mat4.translation(new_velocity[0], new_velocity[1], 0));// Draw the player (sphere)
         //this.player_polys.model.draw(context, program_state, player_transform, this.materials.player);
 
-        let head_transform = player_transform.times(Mat4.translation(0, 0, 2))
-            .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
-        this.player_polys.head.draw(context, program_state, head_transform, this.materials.player);
-
-        // Draw the body (cube)
-        let body_transform = player_transform.times(Mat4.translation(0, 0, 0))
-            .times(Mat4.scale(1, 1, 2)); // Adjust scale as needed
-        this.player_polys.body.draw(context, program_state, body_transform, this.materials.player);
+        let dir_transform;
+        if(this.player.direction === -1){
+            dir_transform = player_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0));
+        }
+        else if(this.player.direction === 1){
+            dir_transform = player_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0))
+                .times(Mat4.rotation(Math.PI, 0, 1, 0));
+        }
+        else{
+            dir_transform = player_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0))
+                .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
+        }
+        this.player_polys.model.draw(context, program_state, dir_transform, this.materials.player);
 
         let bar_length = 1.5*this.player.health/MAX_HEALTH;
         let bar_shift = 1.5 - bar_length;
@@ -428,21 +437,35 @@ export class Polygon_Survivors extends Scene {
     draw_sword(context, program_state, model_transform, t){
         let mod_time = t % this.sword_stats.rotation_speed;
         let angle = 2*Math.PI*mod_time/this.sword_stats.rotation_speed;
+        let sword1_draw_transform = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+            .times(Mat4.scale(this.sword_stats.length/3.4,this.sword_stats.length/3.4,this.sword_stats.length/3.4))
+            .times(Mat4.translation(4, 0, 0))
+            .times(Mat4.rotation(-Math.PI/2, 0, 0, 1));
+
+
         this.sword_transform1 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
             .times(Mat4.translation(4, 0, 0))
             .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
+
+        let sword2_draw_transform = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
+            .times(Mat4.scale(this.sword_stats.length/3.4,this.sword_stats.length/3.4,this.sword_stats.length/3.4))
+            .times(Mat4.translation(-4, 0, 0))
+            .times(Mat4.rotation(Math.PI/2, 0, 0, 1));
 
         this.sword_transform2 = model_transform.times(Mat4.rotation(angle, 0, 0, 1))
             .times(Mat4.translation(-4, 0, 0))
             .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
 
-        if (!this.evolve_sword) {
-            this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword);
-            this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword);
-        } else {
-            this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword.override({color: hex_color("#c30010")}));
-            this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword.override({color: hex_color("#c30010")}));
+        let material = this.materials.sword;
+        if (this.evolve_sword){
+            material = this.materials.sword.override({color: hex_color("#c30010")})
         }
+        this.weapon_polys.sword.draw(context, program_state, sword1_draw_transform, material);
+        //this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.enemy);
+
+        this.weapon_polys.sword.draw(context, program_state, sword2_draw_transform, material);
+        //this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.enemy);
+
     }
 
 
@@ -480,10 +503,11 @@ export class Polygon_Survivors extends Scene {
         }
 
         orbs.forEach((element) =>{
-            let orb_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
-                .times(Mat4.scale(this.orb_stats.radius, this.orb_stats.radius, this.orb_stats.radius));
-            this.weapon_polys.circle.draw(context, program_state, orb_transform, this.materials.orb);
+            let axe_transform = element.transform.times(Mat4.translation(0, 0, 3))
+                .times(Mat4.scale(this.orb_stats.radius, this.orb_stats.radius, this.orb_stats.radius))
+                .times(Mat4.rotation(10*t, 0, 0, 1));
 
+            this.weapon_polys.axe.draw(context, program_state, axe_transform, this.materials.orb)
         })
 
         this.update_orb_locations(t);
@@ -1080,9 +1104,10 @@ export class Polygon_Survivors extends Scene {
                 this.draw_laser(context, program_state, this.player.transform, t);
             }
 
-            this.draw_meteor(context, program_state, Mat4.identity(), t);
-            this.draw_meteor_aoe(context, program_state, Mat4.identity());
-
+            if(this.player.meteor) {
+                this.draw_meteor(context, program_state, Mat4.identity(), t);
+                this.draw_meteor_aoe(context, program_state, Mat4.identity());
+            }
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, round_time);
         }
