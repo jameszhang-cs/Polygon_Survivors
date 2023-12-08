@@ -24,6 +24,8 @@ let start_time = 0;
 let orbs = [];
 let lasers_left = [];
 let lasers_right = [];
+let meteors = [];
+let meteor_aoe = [];
 
 let upgrades = [
     "upgrade sword",
@@ -50,6 +52,16 @@ export class Polygon_Survivors extends Scene {
 
         this.orb_itnum = 0;
         this.orb_neg = -1;
+
+        this.meteor_itnum = 0;
+        this.meteor_x = -2;
+        this.meteor_y = 2;
+
+        this.meteor_aoe_timer = 0;
+        this.meteor_aoe_count = 0;
+        this.meteor_land_x = 0;
+        this.meteor_land_y = 0;
+
 
         this.start_screen = true;
 
@@ -85,12 +97,17 @@ export class Polygon_Survivors extends Scene {
             damage: 10,
             radius: 1
         }
+        this.meteor_stats = {
+            damage: 30,
+            radius: 3,
+        }
 
 
         this.weapon_polys = {
             sword: new Shape_From_File("./assets/sword.obj"),
             rect: new defs.Cube(),
-            circle: new defs.Subdivision_Sphere(4),
+            circle: new defs.Subdivision_Sphere(3),
+            circle4: new defs.Subdivision_Sphere(4),
         }
 
         this.sword_transform1 = Mat4.identity();
@@ -128,6 +145,8 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 1, color: hex_color("#ff4c34")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
+            meteor: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#ff4c34")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
@@ -463,6 +482,23 @@ export class Polygon_Survivors extends Scene {
         this.update_orb_locations(t);
     }
 
+    draw_meteor(context, program_state, model_transform, t){
+        let count = t / 2  ;
+        if (count > meteors.length && meteors.length < 1) {
+            meteors.push(new Projectile(MAX_HEALTH, model_transform));
+        }
+
+        meteors.forEach((element) =>{
+            let meteor_transform = element.transform.times(Mat4.translation(0, 0, 70))
+                .times(Mat4.scale(this.meteor_stats.radius, this.meteor_stats.radius, this.meteor_stats.radius));
+            this.weapon_polys.circle4.draw(context, program_state, meteor_transform, this.materials.meteor);
+
+        })
+        this.update_meteor_locations(context, program_state);
+        this.update_meteor_aoe();
+    }
+
+
     update_laser_locations(){
         let toRemoveLeft = [];
         let toRemoveRight = [];
@@ -531,6 +567,75 @@ export class Polygon_Survivors extends Scene {
 
     }
 
+    update_meteor_locations(context, program_state){
+        let toRemove = [];
+
+        let meteor_x = 3;
+        let meteor_y = 3;
+        this.meteor_itnum = this.meteor_itnum - 0.02;
+        let meteor_z = this.meteor_itnum;
+
+
+        meteors.forEach((meteor, index) => {
+            let meteor_transform = meteor.transform;
+            let meteor_pos = {x: meteor.transform[0][3], y: meteor.transform[1][3], z: meteor.transform[2][3]};
+            meteor.transform = meteor_transform.times(Mat4.translation(this.meteor_x/15, this.meteor_y/15, meteor_z));
+
+
+            if (meteor_pos.z < -110){
+                this.meteor_aoe_count ++;
+                this.meteor_land_x = meteor_pos.x;
+                this.meteor_land_y = meteor_pos.y;
+
+                meteor.onDeath();
+                this.meteor_itnum = 0;
+                toRemove.push(index);
+                let rand1 = getRandomInteger(-2, 2);
+                let rand2 = getRandomInteger(-2, 2);
+                this.meteor_x = rand1;
+                this.meteor_y = rand2;
+
+            }
+        })
+        for (let i = toRemove.length - 1; i >= 0; i--) {
+            meteors.splice(toRemove [i], 1);
+        }
+
+    }
+    draw_meteor_aoe(context, program_state, model_transform) {
+        if (meteor_aoe.length < this.meteor_aoe_count){
+            meteor_aoe.push(new Projectile(MAX_HEALTH, model_transform));
+        }
+        meteor_aoe.forEach((element) =>{
+            let aoe_transform = Mat4.identity().times(Mat4.translation(this.meteor_land_x, this.meteor_land_y, 0))
+                .times(Mat4.scale(this.meteor_stats.radius*2, this.meteor_stats.radius*2, 1));
+            element.transform = aoe_transform;
+
+            this.weapon_polys.circle4.draw(context, program_state, aoe_transform, this.materials.meteor);
+
+        })
+
+    }
+
+    update_meteor_aoe(){
+        let toRemove = [];
+        meteor_aoe.forEach((meteor, index) =>{
+            this.meteor_aoe_timer ++;
+            if (this.meteor_aoe_timer > 50){
+                this.meteor_aoe_timer = 0;
+                toRemove.push(index);
+                this.meteor_aoe_count --;
+
+            }
+
+
+        })
+        for (let i = toRemove.length - 1; i >= 0; i--) {
+            meteor_aoe.splice(toRemove [i], 1);
+        }
+
+    }
+
     check_collision(obj1_transform, obj2_transform, radius) {
 
         // Get the positions of the player and projectile
@@ -591,6 +696,15 @@ export class Polygon_Survivors extends Scene {
                 //this.player_transform = Mat4.identity();
             }
             //console.log(enemy_pos);
+            meteor_aoe.forEach((meteor)=>{
+
+                if (this.check_collision(element.transform, meteor.transform, this.meteor_stats.radius*1.2)){
+                    element.takeDamage(0.5);
+                    element.hit = true;
+                }
+
+
+            })
 
             lasers_right.forEach((laser) =>{
                 if (this.check_collision(element.transform, laser.transform, 1)){
@@ -612,6 +726,7 @@ export class Polygon_Survivors extends Scene {
                     element.hit = true;
                 }
             })
+
 
             let sword1_points = gen_sword_points(this.player.transform, this.sword_transform1, this.sword_stats.length, 10, 3);
             let sword2_points = gen_sword_points(this.player.transform, this.sword_transform2, this.sword_stats.length, 10, 3);
@@ -714,7 +829,7 @@ export class Polygon_Survivors extends Scene {
 
         enemies.forEach(element => {
             // Draw the head (sphere)
-            console.log("drawing enemy");
+            //console.log("drawing enemy");
             let enemy_transform = element.transform;
 
             //decide size and color based on level
@@ -830,6 +945,21 @@ export class Polygon_Survivors extends Scene {
         this.sword_stats.damage = 1;
     }
 
+    draw_light(model_transform, program_state){
+        let rot1 = model_transform.times(Mat4.rotation(this.rotation_angle,0,1,0))
+            .times(Mat4.translation(0,0,50));
+        let light_vec = vec4(rot1[0][3],rot1[1][3], rot1[2][3], 1);
+        //console.log("light_Vec " + light_vec);
+
+        if (light_vec[2] < 0){
+            program_state.lights = [new Light(light_vec, color(255, 255, 255, 1), 1)];
+        }else {
+            // The parameters of the Light are: position, color, size
+            program_state.lights = [new Light(light_vec, color(255, 255, 255, 1), 1)];
+        }
+        return program_state;
+    }
+
     display(context, program_state) {
         let canvas = context.canvas;
         const mouse_position = (e, rect = canvas.getBoundingClientRect()) =>
@@ -863,14 +993,18 @@ export class Polygon_Survivors extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const light_position = vec4(0, 0, 50, 1);
-        // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
+
+
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         let round_time = t - start_time;
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
+
+        this.light_position = model_transform;
+        this.rotation_angle = t/10;
+        this.draw_light(this.light_position, program_state);
+        program_state.lights = [new Light(vec4(0,0,150,1), color(255, 255, 255, 1), 10)];
 
         if (this.start_screen) {
             this.draw_start_screen(context, program_state);
@@ -905,6 +1039,9 @@ export class Polygon_Survivors extends Scene {
             if(this.player.laser) {
                 this.draw_laser(context, program_state, this.player.transform, t);
             }
+
+            this.draw_meteor(context, program_state, Mat4.identity(), t);
+            this.draw_meteor_aoe(context, program_state, Mat4.identity());
 
             //generate and draw enemies
             this.generate_enemies(context, program_state, model_transform, round_time);
