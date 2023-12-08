@@ -14,7 +14,7 @@ const MIN_X = -20;
 const MAX_Y = 20;
 const MIN_Y = -20;
 const PROJ_Z = 1;
-const MAX_HEALTH = 10;
+const MAX_HEALTH = 100;
 
 let enemies = [];
 
@@ -32,6 +32,8 @@ let upgrades = [
     "new orb",
     "upgrade orb",
 ];
+
+
 
 let levelup_opts = [];
 
@@ -584,19 +586,73 @@ export class Polygon_Survivors extends Scene {
             } else {
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
-            edge++;
-            enemies.push(new Enemy(MAX_HEALTH, proj_transform));
+
+            console.log(this.player.level);
+            if(this.player.level === 1){
+                enemies.push(new Enemy(MAX_HEALTH, proj_transform, 1));
+            }
+            else if(this.player.level === 2){
+                let index = Math.floor(Math.random() * 3);
+
+                if(index < 2){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 1));
+                }
+                else{
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 2));
+                }
+            }
+            else if(this.player.level === 3){
+                let index = Math.floor(Math.random() * 4);
+
+                if(index < 1){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 1));
+                }
+                else if(index < 3){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 2));
+                }
+                else if(index < 4){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+                }
+            }
+            else if(this.player.level === 4){
+                let index = Math.floor(Math.random() * 4);
+
+                if(index < 2){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 2));
+                }
+                else {
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+                }
+            }
+            else if(this.player.level > 4){
+                enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+            }
         }
 
         enemies.forEach(element => {
             // Draw the head (sphere)
+            console.log("drawing enemy");
             let enemy_transform = element.transform;
+
+            //decide size and color based on level
+            let scale = 1 + (element.level - 1) * 0.4;
+            let material;
+            if (element.level === 1){
+                material = this.materials.enemy;
+            }
+            else if(element.level === 2){
+                material = this.materials.enemy.override({color:hex_color("#5c3ea2")})
+            }
+            else if(element.level === 3){
+                material = this.materials.enemy.override({color:hex_color("#5e1616")})
+            }
+
             let head_transform = enemy_transform.times(Mat4.translation(0, 0, 2))
-                .times(Mat4.scale(1, 1, 1)); // Adjust scale as needed
+                .times(Mat4.scale(scale, scale, scale)); // Adjust scale as needed
 
             // Draw the body (cube)
             let body_transform = enemy_transform.times(Mat4.translation(0, 0, 0))
-                .times(Mat4.scale(1, 1, 1.5)); // Adjust scale as needed
+                .times(Mat4.scale(scale, scale, 1.5*scale)); // Adjust scale as needed
 
 
             if(element.hit === true){
@@ -605,10 +661,10 @@ export class Polygon_Survivors extends Scene {
                 element.hit = false;
             }
             else {
-                this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy);
-                this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy);
+                this.enemy_polys.head.draw(context, program_state, head_transform, material);
+                this.enemy_polys.body.draw(context, program_state, body_transform, material);
             }
-            let bar_length = 1.5*element.health/MAX_HEALTH;
+            let bar_length = 1.5*element.health/(element.level*MAX_HEALTH);
             let bar_shift = 1.5 - bar_length;
 
             let bar_transform = Mat4.identity();
@@ -735,9 +791,6 @@ export class Polygon_Survivors extends Scene {
             //draws weapon tray
             this.draw_loadout(context, program_state)
             this.draw_level_text(context, program_state);
-
-            //move player based on keypress
-            this.player.transform = this.draw_player(context, program_state, this.player.transform);
 
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
