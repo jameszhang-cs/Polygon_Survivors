@@ -152,6 +152,7 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#858080")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
+            laser2: new Material(textured, {ambient: 1, texture: new Texture("assets/yellow1.png")}),
             horn: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#dedede")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
@@ -521,13 +522,13 @@ export class Polygon_Survivors extends Scene {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
                 .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
-            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
+            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser2);
         });
         lasers_right.forEach(element => {
             // Draw the head (sphere)
             let laser_transform = element.transform.times(Mat4.translation(0, 0, 1.5))
                 .times(Mat4.scale(this.laser_stats.length, 0.3, 0.3)); // Adjust scale as needed
-            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser);
+            this.weapon_polys.rect.draw(context, program_state, laser_transform, this.materials.laser2);
         });
 
         this.update_laser_locations();
@@ -830,7 +831,7 @@ export class Polygon_Survivors extends Scene {
                 if (element.level > 1){
                     this.player.curr_xp += element.level/2;
                 }
-                if (this.player.curr_xp === this.player.levelup_xp) {
+                if (this.player.curr_xp >= this.player.levelup_xp) {
                     this.player.level += 1;
                     this.levelup_state = true;
                     levelup_opts = this.gen_levelup_opts();
@@ -1080,12 +1081,15 @@ export class Polygon_Survivors extends Scene {
 
     draw_light(model_transform, program_state){
         let rot1 = model_transform.times(Mat4.rotation(this.rotation_angle,0,1,0))
-            .times(Mat4.translation(0,0,50));
+            .times(Mat4.translation(0,0,60));
         let light_vec = vec4(rot1[0][3],rot1[1][3], rot1[2][3], 1);
         //console.log("light_Vec " + light_vec);
 
         if (light_vec[2] < 0){
-            program_state.lights = [new Light(light_vec, color(255, 255, 255, 1), 1)];
+            rot1 = model_transform.times(Mat4.rotation(this.rotation_angle+Math.PI,0,1,0))
+                .times(Mat4.translation(0,0,60));
+            light_vec = vec4(rot1[0][3],rot1[1][3], rot1[2][3], 1);
+            program_state.lights = [new Light(light_vec, color(255, 0, 0, 1), 1)];
         }else {
             // The parameters of the Light are: position, color, size
             program_state.lights = [new Light(light_vec, color(255, 255, 255, 1), 1)];
@@ -1135,9 +1139,9 @@ export class Polygon_Survivors extends Scene {
         let model_transform = Mat4.identity();
 
         this.light_position = model_transform;
-        this.rotation_angle = t/10;
+        this.rotation_angle = t/5;
         this.draw_light(this.light_position, program_state);
-        program_state.lights = [new Light(vec4(0,0,150,1), color(255, 255, 255, 1), 10)];
+        //program_state.lights = [new Light(vec4(0,0,150,1), color(255, 255, 255, 1), 10)];
 
         if (this.start_screen) {
             this.draw_start_screen(context, program_state);
