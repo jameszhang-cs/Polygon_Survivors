@@ -3,6 +3,7 @@ import {Player, Enemy, Projectile} from './entity.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
 import {getRandomInteger, calculateUnitVector, scale_velocity,
     sword_collision, gen_sword_points} from "./util.js";
+import {Text_Line} from "./examples/text-demo.js";
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
@@ -40,15 +41,12 @@ export class Polygon_Survivors extends Scene {
         super();
         this.dir = "";
 
-        this.mousex;
-        this.mousey;
-
         this.orb_itnum = 0;
         this.orb_neg = -1;
 
         this.start_screen = true;
 
-        this.player = new Player(MAX_HEALTH, 0, Mat4.identity(), [0,0], 0.08);
+        this.player = new Player(MAX_HEALTH, 1, Mat4.identity(), [0,0], 0.08);
         this.levelup_state = false;
 
         this.player_polys = {
@@ -100,7 +98,7 @@ export class Polygon_Survivors extends Scene {
             healthbar: new defs.Cube(),
             levelup_menu: new defs.Cube(),
 
-
+            text: new Text_Line(30),
         };
 
         const textured = new defs.Textured_Phong(1);
@@ -126,8 +124,7 @@ export class Polygon_Survivors extends Scene {
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
             laser_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/kraken.png")}),
             orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
-
-
+            text_image: new Material(textured, {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
 
         }
 
@@ -644,6 +641,19 @@ export class Polygon_Survivors extends Scene {
         this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
     }
 
+    draw_level_text(context, program_state) {
+        let model_transform = Mat4.identity();
+        this.set_initial_background(context, program_state, model_transform);
+
+        let level_transform = model_transform
+            .times(Mat4.translation(0, 20, 0));
+
+        let level_str = "Level: " + this.player.level;
+        console.log(level_str);
+        this.shapes.text.set_string(level_str, context.context);
+        this.shapes.text.draw(context, program_state, level_transform, this.materials.text_image);
+    }
+
     cleanup_game(){
         this.player.health = MAX_HEALTH;
         this.player.level = 1;
@@ -716,6 +726,7 @@ export class Polygon_Survivors extends Scene {
         }
         else if(this.levelup_state) {
             this.draw_levelup_screen(context, program_state);
+            this.draw_level_text(context, program_state);
         }
         else {
             //console.log("round time is: " + round_time);
@@ -723,6 +734,7 @@ export class Polygon_Survivors extends Scene {
 
             //draws weapon tray
             this.draw_loadout(context, program_state)
+            this.draw_level_text(context, program_state);
 
             //move player based on keypress
             this.player.transform = this.draw_player(context, program_state, this.player.transform);
