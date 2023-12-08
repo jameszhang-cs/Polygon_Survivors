@@ -94,7 +94,7 @@ export class Polygon_Survivors extends Scene {
         }
 
         this.laser_stats = {
-            damage: 10,
+            damage: 15,
             length: 1.5,
             rate: 1
         }
@@ -104,7 +104,7 @@ export class Polygon_Survivors extends Scene {
             radius: 1.5
         }
         this.meteor_stats = {
-            damage: 1,
+            damage: 1.5,
             radius: 3,
         }
 
@@ -398,7 +398,7 @@ export class Polygon_Survivors extends Scene {
                 weapon_levels[1]++;
                 break;
             case "upgrade laser":
-                this.laser_stats.damage += 2;
+                this.laser_stats.damage += 5;
                 this.laser_stats.rate += 1;
                 console.log("upgraded laser!");
                 weapon_levels[1]++;
@@ -566,7 +566,7 @@ export class Polygon_Survivors extends Scene {
         meteors.forEach((element) =>{
             let meteor_transform = element.transform.times(Mat4.translation(0, 0, 70))
                 .times(Mat4.scale(this.meteor_stats.radius/1.5, this.meteor_stats.radius/1.5, this.meteor_stats.radius/1.5))
-                .times (Mat4.rotation(15*t, 1, 1, 1));
+                .times (Mat4.rotation(5*t, 1, 1, 1));
             this.weapon_polys.meteor2.draw(context, program_state, meteor_transform, this.materials.meteor_rock);
 
         })
@@ -658,7 +658,7 @@ export class Polygon_Survivors extends Scene {
             meteor.transform = meteor_transform.times(Mat4.translation(this.meteor_x/15, this.meteor_y/15, meteor_z));
 
 
-            if (meteor_pos.z < -110){
+            if (meteor_pos.z < -100){
                 this.meteor_aoe_count ++;
                 this.meteor_land_x = meteor_pos.x;
                 this.meteor_land_y = meteor_pos.y;
@@ -683,7 +683,7 @@ export class Polygon_Survivors extends Scene {
             meteor_aoe.push(new Projectile(MAX_HEALTH, model_transform));
         }
         meteor_aoe.forEach((element) =>{
-            let aoe_transform = Mat4.identity().times(Mat4.translation(this.meteor_land_x, this.meteor_land_y, 0))
+            let aoe_transform = Mat4.identity().times(Mat4.translation(this.meteor_land_x, this.meteor_land_y, -1))
                 .times(Mat4.scale(this.meteor_stats.radius*2, this.meteor_stats.radius*2, 1));
             element.transform = aoe_transform;
 
