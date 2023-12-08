@@ -193,32 +193,47 @@ export class Polygon_Survivors extends Scene {
         // Draw three squares spaced evenly on the screen
         let model_transform = Mat4.identity()
         this.set_initial_background(context, program_state, model_transform);
+
         // Rectangle 1
+        let opt1_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(-3, 0, 1));
+        let opt1_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1/5, 1/5, 0, 0));
+        //Rectangle 2
+        let opt2_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(0, 0, 1));
+        let opt2_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0));
+        //Rectangle 3
+        let opt3_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(3, 0, 1));
+        let opt3_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0));
 
         let materials = [];
+        let texts = [];
         for(let i = 0; i < levelup_opts.length; i++){
             if (levelup_opts[i] === "upgrade sword"){
                 materials.push(this.materials.sword_icon);
+                this.shapes.text.set_string("UPGRADE SWORD", context.context);
+                this.shapes.text.draw(context, program_state, opt1_text_transform, this.materials.text_image);
             }
-            else if(levelup_opts[i] === "new laser" || levelup_opts[i] === "upgrade laser"){
+            else if(levelup_opts[i] === "new laser"){
                 materials.push(this.materials.laser_icon);
+                texts.push("UNLOCK LASER");
             }
-            else if(levelup_opts[i] === "new orb" || levelup_opts[i] === "upgrade orb"){
+            else if(levelup_opts[i] === "upgrade laser"){
+                materials.push(this.materials.laser_icon);
+                texts.push("UPGRADE LASER");
+            }
+            else if(levelup_opts[i] === "new orb"){
                 materials.push(this.materials.orb_icon);
+                texts.push("UNLOCK ORB");
+            }
+            else if(levelup_opts[i] === "upgrade orb"){
+                materials.push(this.materials.orb_icon);
+                texts.push("UPGRADE ORB");
             }
         }
 
         console.log(materials.length);
 
-        let opt1_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(-3, 0, 1));
         this.shapes.square.draw(context, program_state, opt1_transform, materials[0]);
-
-        // Rectangle 2
-        let opt2_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(0, 0, 1));
         this.shapes.square.draw(context, program_state, opt2_transform, materials[1]);
-
-        // Rectangle 3
-        let opt3_transform = model_transform.times(Mat4.scale(5, 7, 0, 0)).times(Mat4.translation(3, 0, 1));
         this.shapes.square.draw(context, program_state, opt3_transform, materials[2]);
     }
 
@@ -586,6 +601,7 @@ export class Polygon_Survivors extends Scene {
             } else {
                 proj_transform = proj_transform.times(Mat4.translation(this.player.transform[0][3] + getRandomInteger(MIN_X, MAX_X), this.player.transform[1][3] + MIN_Y, PROJ_Z));
             }
+            edge++;
 
             console.log(this.player.level);
             if(this.player.level === 1){
@@ -702,7 +718,7 @@ export class Polygon_Survivors extends Scene {
         this.set_initial_background(context, program_state, model_transform);
 
         let level_transform = model_transform
-            .times(Mat4.translation(0, 20, 0));
+            .times(Mat4.translation(-5, 19, 5));
 
         let level_str = "Level: " + this.player.level;
         console.log(level_str);
