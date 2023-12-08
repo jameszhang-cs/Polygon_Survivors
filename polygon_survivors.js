@@ -70,7 +70,7 @@ export class Polygon_Survivors extends Scene {
         this.evolve_sword = false;
 
         this.player_polys = {
-            model: new Shape_From_File("./assets/amogus.obj"),
+            model: new Shape_From_File("./assets/model.obj"),
             head: new defs.Subdivision_Sphere(4),
             body: new defs.Cube(),
         }
@@ -78,6 +78,11 @@ export class Polygon_Survivors extends Scene {
         this.enemy_polys = {
             head: new defs.Subdivision_Sphere(4),
             body: new defs.Cube(),
+            horn: new defs.Closed_Cone(50, 50, [[0, 2], [0, 1]]),
+
+            type1: new Shape_From_File("./assets/model.obj"),
+            type2: new Shape_From_File("./assets/model.obj"),
+            type3: new Shape_From_File("./assets/model.obj"),
         }
 
         this.sword_stats = {
@@ -136,7 +141,7 @@ export class Polygon_Survivors extends Scene {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             enemy: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#334d5e")}),
+                {ambient: 1, diffusivity: .6, color: hex_color("#4397ce")}),
             player: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#9c1010")}),
             sword: new Material(new defs.Phong_Shader(),
@@ -147,6 +152,8 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             meteor: new Material(new Gouraud_Shader(),
                 {ambient: 1, color: hex_color("#880808")}),
+            horn: new Material(new defs.Phong_Shader(),
+                {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#dedede")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
@@ -830,38 +837,16 @@ export class Polygon_Survivors extends Scene {
         enemies.forEach(element => {
             // Draw the head (sphere)
             //console.log("drawing enemy");
-            let enemy_transform = element.transform;
 
             //decide size and color based on level
-            let scale = 1 + (element.level - 1) * 0.4;
-            let material;
-            if (element.level === 1){
-                material = this.materials.enemy;
-            }
-            else if(element.level === 2){
-                material = this.materials.enemy.override({color:hex_color("#5c3ea2")})
-            }
-            else if(element.level === 3){
-                material = this.materials.enemy.override({color:hex_color("#5e1616")})
-            }
 
-            let head_transform = enemy_transform.times(Mat4.translation(0, 0, 2))
-                .times(Mat4.scale(scale, scale, scale)); // Adjust scale as needed
-
-            // Draw the body (cube)
-            let body_transform = enemy_transform.times(Mat4.translation(0, 0, 0))
-                .times(Mat4.scale(scale, scale, 1.5*scale)); // Adjust scale as needed
-
-
-            if(element.hit === true){
-                this.enemy_polys.head.draw(context, program_state, head_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
-                this.enemy_polys.body.draw(context, program_state, body_transform, this.materials.enemy.override({color:hex_color("#832b2b")}));
+            let enemy_transform = this.draw_enemy(context, program_state, element.level, element.hit, element.transform, t);
+            if (element.hit === true){
                 element.hit = false;
             }
-            else {
-                this.enemy_polys.head.draw(context, program_state, head_transform, material);
-                this.enemy_polys.body.draw(context, program_state, body_transform, material);
-            }
+            //this.enemy_polys.head.draw(context, program_state, head_transform, material);
+            ///this.enemy_polys.body.draw(context, program_state, body_transform, material);
+
             let bar_length = 1.5*element.health/(element.level*MAX_HEALTH);
             let bar_shift = 1.5 - bar_length;
 
@@ -874,6 +859,61 @@ export class Polygon_Survivors extends Scene {
         this.update_enemy_locations();
     }
 
+    draw_enemy(context, program_state, level, hit, enemy_transform, t){
+        let scale = 1 + (level - 1) * 0.4;
+
+        let material;
+        if(hit === true){
+            material = this.materials.enemy.override({color:hex_color("#832b2b")});
+
+        }
+        else if (level === 1){
+            material = this.materials.enemy;
+        }
+        else if(level === 2){
+            material = this.materials.enemy.override({color:hex_color("#5c3ea2")})
+        }
+        else if(level === 3){
+            material = this.materials.enemy.override({color:hex_color("#5e1616")})
+        }
+
+        let horn1_transform = enemy_transform.times(Mat4.translation(1.3 * scale, 0, scale))
+            .times(Mat4.rotation(Math.PI/4, 0, 1, 0))
+            .times(Mat4.scale(0.3, 0.3, 1));
+
+        let horn2_transform = enemy_transform.times(Mat4.translation(scale, scale, 0.6 * scale))
+            .times(Mat4.rotation(Math.PI/4, 0, 1, 0))
+            .times(Mat4.rotation(-Math.PI/6, 1, 0, 1))
+            .times(Mat4.scale(0.3, 0.3, 1));
+
+        let horn3_transform = enemy_transform.times(Mat4.translation(scale, -scale, 0.6 * scale))
+            .times(Mat4.rotation(Math.PI/4, 0, 1, 0))
+            .times(Mat4.rotation(Math.PI/6, 1, 0, 1))
+            .times(Mat4.scale(0.3, 0.3, 1));
+
+        enemy_transform = enemy_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0))
+            .times(Mat4.rotation(5.0*Math.PI/4.0, 0, 1, 0))
+            .times(Mat4.scale(scale + 0.05*Math.sin(3.5*t), scale + 0.05*Math.sin(3.5*t), scale + 0.05*Math.sin(3.5*t)));
+
+        if(level === 1){
+            this.enemy_polys.type1.draw(context, program_state, enemy_transform, material);
+            this.enemy_polys.horn.draw(context, program_state, horn1_transform, hit? material : this.materials.horn);
+        }
+        else if(level === 2){
+            this.enemy_polys.type1.draw(context, program_state, enemy_transform, material);
+            this.enemy_polys.horn.draw(context, program_state, horn2_transform, hit? material : this.materials.horn);
+            this.enemy_polys.horn.draw(context, program_state, horn3_transform, hit? material : this.materials.horn);
+        }
+        else if(level === 3){
+            this.enemy_polys.type1.draw(context, program_state, enemy_transform, material);
+
+            this.enemy_polys.horn.draw(context, program_state, horn1_transform, hit? material : this.materials.horn);
+            this.enemy_polys.horn.draw(context, program_state, horn2_transform, hit? material : this.materials.horn);
+            this.enemy_polys.horn.draw(context, program_state, horn3_transform, hit? material : this.materials.horn);
+        }
+
+        return enemy_transform;
+    }
     set_initial_background(context, program_state, model_transform){
         model_transform = model_transform.times(Mat4.translation(0,0,-1))
             .times(Mat4.scale(50,50,0, 0));
