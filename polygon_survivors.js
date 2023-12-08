@@ -2,7 +2,7 @@ import {defs, tiny} from './examples/common.js';
 import {Player, Enemy, Projectile} from './entity.js';
 import {Shape_From_File} from "./examples/obj-file-demo.js";
 import {getRandomInteger, calculateUnitVector, scale_velocity,
-    sword_collision, gen_sword_points} from "./util.js";
+    sword_collision, gen_sword_points, Gouraud_Shader} from "./util.js";
 import {Text_Line} from "./examples/text-demo.js";
 
 const {
@@ -94,7 +94,7 @@ export class Polygon_Survivors extends Scene {
         }
 
         this.orb_stats = {
-            damage: 10,
+            damage: 7,
             radius: 1
         }
         this.meteor_stats = {
@@ -145,8 +145,8 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 1, color: hex_color("#ff4c34")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
-            meteor: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#ff4c34")}),
+            meteor: new Material(new Gouraud_Shader(),
+                {ambient: 1, color: hex_color("#880808")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
@@ -491,7 +491,7 @@ export class Polygon_Survivors extends Scene {
         meteors.forEach((element) =>{
             let meteor_transform = element.transform.times(Mat4.translation(0, 0, 70))
                 .times(Mat4.scale(this.meteor_stats.radius, this.meteor_stats.radius, this.meteor_stats.radius));
-            this.weapon_polys.circle4.draw(context, program_state, meteor_transform, this.materials.meteor);
+            this.weapon_polys.circle.draw(context, program_state, meteor_transform, this.materials.meteor);
 
         })
         this.update_meteor_locations(context, program_state);
