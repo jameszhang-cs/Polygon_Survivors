@@ -744,9 +744,15 @@ export class Polygon_Survivors extends Scene {
             const angleDifference = angle - currentAngle;
 
             // Update the original element in the array with the rotated enemy
-            element.transform = enemy_transform
-                .times(Mat4.rotation(angleDifference, 0, 0, 1))
-                .times(Mat4.translation(0.02, 0, 0));
+            if (element.level === 4){
+                element.transform = enemy_transform
+                    .times(Mat4.rotation(angleDifference, 0, 0, 1))
+                    .times(Mat4.translation(0.04, 0, 0));
+            }else {
+                element.transform = enemy_transform
+                    .times(Mat4.rotation(angleDifference, 0, 0, 1))
+                    .times(Mat4.translation(0.025, 0, 0));
+            }
 
             if (this.check_collision(this.player.transform, element.transform, 1.5)) {
                 // Handle player death (you can customize this part)
@@ -888,7 +894,15 @@ export class Polygon_Survivors extends Scene {
                 }
             }
             else if(this.player.level > 4){
-                enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+                //enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+                let index = Math.floor(Math.random() * 4);
+
+                if(index < 3){
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 3));
+                }
+                else {
+                    enemies.push(new Enemy(MAX_HEALTH, proj_transform, 4));
+                }
             }
         }
 
@@ -919,6 +933,9 @@ export class Polygon_Survivors extends Scene {
 
     draw_enemy(context, program_state, level, hit, enemy_transform, t){
         let scale = 1 + (level - 1) * 0.4;
+        if (level === 4){
+            scale = 1 + (2 - 1) * 0.4;
+        }
 
         let material;
         if(hit === true){
@@ -933,6 +950,8 @@ export class Polygon_Survivors extends Scene {
         }
         else if(level === 3){
             material = this.materials.enemy.override({color:hex_color("#5e1616")})
+        }else{
+            material = this.materials.enemy.override({color:hex_color("#FFB6C1")})
         }
 
         let horn1_transform = enemy_transform.times(Mat4.translation(1.3 * scale, 0, scale))
@@ -968,7 +987,12 @@ export class Polygon_Survivors extends Scene {
             this.enemy_polys.horn.draw(context, program_state, horn1_transform, hit? material : this.materials.horn);
             this.enemy_polys.horn.draw(context, program_state, horn2_transform, hit? material : this.materials.horn);
             this.enemy_polys.horn.draw(context, program_state, horn3_transform, hit? material : this.materials.horn);
+        }else{
+            this.enemy_polys.type1.draw(context, program_state, enemy_transform, material);
+            this.enemy_polys.horn.draw(context, program_state, horn2_transform, hit? material : this.materials.horn);
+            this.enemy_polys.horn.draw(context, program_state, horn3_transform, hit? material : this.materials.horn);
         }
+
 
         return enemy_transform;
     }
