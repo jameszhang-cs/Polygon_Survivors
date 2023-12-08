@@ -422,7 +422,9 @@ export class Polygon_Survivors extends Scene {
             dir_transform = player_transform.times(Mat4.rotation(Math.PI/2, 1, 0, 0))
                 .times(Mat4.rotation(Math.PI/2, 0, 1, 0));
         }
-        this.player_polys.model.draw(context, program_state, dir_transform, this.materials.player);
+
+        let final_transform = dir_transform.times(Mat4.translation(0, 2, 0));
+        this.player_polys.model.draw(context, program_state, final_transform, this.materials.player);
 
         let bar_length = 1.5*this.player.health/MAX_HEALTH;
         let bar_shift = 1.5 - bar_length;
