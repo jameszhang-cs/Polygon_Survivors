@@ -112,6 +112,9 @@ export class Polygon_Survivors extends Scene {
         this.weapon_polys = {
             sword: new Shape_From_File("./assets/shortsword.obj"),
             axe: new Shape_From_File("./assets/Hazard_Saw.obj"),
+            meteor: new Shape_From_File("./assets/meteor.obj"),
+            meteor2: new Shape_From_File("./assets/meteor2.obj"),
+
             rect: new defs.Cube(),
             circle: new defs.Subdivision_Sphere(3),
             circle4: new defs.Subdivision_Sphere(4),
@@ -162,7 +165,9 @@ export class Polygon_Survivors extends Scene {
             orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/axe.png")}),
             evolved_sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/bt.png")}),
             text_image: new Material(textured, {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
-            meteor: new Material(textured, {ambient: 1, texture: new Texture("assets/lava.png")}),
+            meteor: new Material(textured, {ambient: 1, texture: new Texture("assets/lava2.jpeg")}),
+            meteor_rock: new Material(new defs.Phong_Shader(),
+                {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#5e5e5e")}),
             meteor_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
         }
 
@@ -560,9 +565,9 @@ export class Polygon_Survivors extends Scene {
 
         meteors.forEach((element) =>{
             let meteor_transform = element.transform.times(Mat4.translation(0, 0, 70))
-                .times(Mat4.scale(this.meteor_stats.radius, this.meteor_stats.radius, this.meteor_stats.radius))
-                .times (Mat4.rotation(2*t, 0, 0, 1));
-            this.weapon_polys.circle.draw(context, program_state, meteor_transform, this.materials.meteor);
+                .times(Mat4.scale(this.meteor_stats.radius/1.5, this.meteor_stats.radius/1.5, this.meteor_stats.radius/1.5))
+                .times (Mat4.rotation(15*t, 1, 1, 1));
+            this.weapon_polys.meteor2.draw(context, program_state, meteor_transform, this.materials.meteor_rock);
 
         })
         this.update_meteor_locations(context, program_state);
