@@ -144,7 +144,7 @@ export class Polygon_Survivors extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             enemy: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, color: hex_color("#4397ce")}),
-            player: new Material(new defs.Phong_Shader(),
+            player: new Material(new Gouraud_Shader(),
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#75529d")}),
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
