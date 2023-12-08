@@ -34,6 +34,8 @@ let upgrades = [
     "new orb",
     "upgrade orb",
     "evolve sword",
+    "unlock meteor",
+    "upgrade meteor",
 ];
 
 //sword, laser, orb
@@ -109,7 +111,6 @@ export class Polygon_Survivors extends Scene {
         this.weapon_polys = {
             sword: new Shape_From_File("./assets/shortsword.obj"),
             axe: new Shape_From_File("./assets/Hazard_Saw.obj"),
-
             rect: new defs.Cube(),
             circle: new defs.Subdivision_Sphere(3),
             circle4: new defs.Subdivision_Sphere(4),
@@ -150,8 +151,6 @@ export class Polygon_Survivors extends Scene {
                 {ambient: 0.7, diffusivity: .6, color: hex_color("#858080")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
-            meteor: new Material(new Gouraud_Shader(),
-                {ambient: 1, color: hex_color("#880808")}),
             horn: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#dedede")}),
             grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
@@ -161,7 +160,8 @@ export class Polygon_Survivors extends Scene {
             orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/axe.png")}),
             evolved_sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/bt.png")}),
             text_image: new Material(textured, {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
-
+            meteor: new Material(textured, {ambient: 1, texture: new Texture("assets/lava.png")}),
+            meteor_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
         }
 
         this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
@@ -297,6 +297,24 @@ export class Polygon_Survivors extends Scene {
                     this.shapes.text.draw(context, program_state, opt2_text_transform.times(Mat4.translation(-9, 0, 0)), this.materials.text_image);
                 }
             }
+            else if(levelup_opts[i] === "unlock meteor"){
+                materials.push(this.materials.meteor_icon);
+                this.shapes.text.set_string("UNLOCK METEOR", context.context);
+                if (i === 0) {
+                    this.shapes.text.draw(context, program_state, opt1_text_transform.times(Mat4.translation(-9.75, 0, 0)), this.materials.text_image);
+                } else {
+                    this.shapes.text.draw(context, program_state, opt2_text_transform.times(Mat4.translation(-9.75, 0, 0)), this.materials.text_image);
+                }
+            }
+            else if(levelup_opts[i] === "upgrade meteor"){
+                materials.push(this.materials.meteor_icon);
+                this.shapes.text.set_string("UPGRADE METEOR", context.context);
+                if (i === 0) {
+                    this.shapes.text.draw(context, program_state, opt1_text_transform.times(Mat4.translation(-9.75, 0, 0)), this.materials.text_image);
+                } else {
+                    this.shapes.text.draw(context, program_state, opt2_text_transform.times(Mat4.translation(-9.75, 0, 0)), this.materials.text_image);
+                }
+            }
         }
 
         console.log(materials.length);
@@ -330,7 +348,13 @@ export class Polygon_Survivors extends Scene {
         else if(this.evolve_sword && option === "evolve sword"){
             return false;
         }
-        else if(this.evolve_sword && option === "upgrade sword") {
+        else if(this.evolve_sword && option === "upgrade sword"){
+            return false;
+        }
+        else if(this.player.meteor && option === "unlock meteor"){
+            return false;
+        }
+        else if(!this.player.meteor && option === "upgrade meteor"){
             return false;
         }
         else{
@@ -387,6 +411,14 @@ export class Polygon_Survivors extends Scene {
             case "evolve sword":
                 this.sword_stats.life_steal = 0.1;
                 this.evolve_sword = true;
+                break;
+            case "unlock meteor":
+                this.player.meteor = true;
+                player_weapons.push("meteor");
+                break;
+            case "upgrade meteor":
+                this.meteor_stats.radius += 0.5;
+                this.meteor_stats.damage += 2;
                 break;
         }
     }
@@ -714,7 +746,7 @@ export class Polygon_Survivors extends Scene {
             // Update the original element in the array with the rotated enemy
             element.transform = enemy_transform
                 .times(Mat4.rotation(angleDifference, 0, 0, 1))
-                .times(Mat4.translation(0.025, 0, 0));
+                .times(Mat4.translation(0.02, 0, 0));
 
             if (this.check_collision(this.player.transform, element.transform, 1.5)) {
                 // Handle player death (you can customize this part)
@@ -966,6 +998,8 @@ export class Polygon_Survivors extends Scene {
                 this.shapes.square.draw(context, program_state, square_transform, this.materials.evolved_sword_icon);
             } else if (player_weapons[i] === "orb") {
                 this.shapes.square.draw(context, program_state, square_transform, this.materials.orb_icon);
+            } else if (player_weapons[i] === "meteor") {
+                this.shapes.square.draw(context, program_state, square_transform, this.materials.meteor_icon);
             } else {
                 this.shapes.square.draw(context, program_state, square_transform, this.materials.laser_icon);
             }
@@ -999,6 +1033,7 @@ export class Polygon_Survivors extends Scene {
         this.player.laser = false;
         this.player.orb = false;
         this.evolve_sword = false;
+        this.player.meteor = false;
 
         enemies = [];
         orbs = [];
