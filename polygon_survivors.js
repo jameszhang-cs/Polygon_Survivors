@@ -9,10 +9,10 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
 } = tiny;
 
-const MAX_X = 50;
-const MIN_X = -50;
-const MAX_Y = 30;
-const MIN_Y = -30;
+const MAX_X = 40;
+const MIN_X = -40;
+const MAX_Y = 25;
+const MIN_Y = -25;
 const PROJ_Z = 1;
 const MAX_HEALTH = 100;
 
@@ -31,7 +31,11 @@ let upgrades = [
     "upgrade laser",
     "new orb",
     "upgrade orb",
+    "evolve sword",
 ];
+
+//sword, laser, orb
+let weapon_levels = [1, 0, 0];
 
 let player_weapons = [];
 player_weapons.push("sword");
@@ -51,6 +55,7 @@ export class Polygon_Survivors extends Scene {
 
         this.player = new Player(MAX_HEALTH, 1, Mat4.identity(), [0,0], 0.13);
         this.levelup_state = false;
+        this.evolve_sword = false;
 
         this.player_polys = {
             model: new Shape_From_File("./assets/amogus.obj"),
@@ -63,12 +68,13 @@ export class Polygon_Survivors extends Scene {
             body: new defs.Cube(),
         }
 
-
         this.sword_stats = {
             damage: 2,
             rotation_speed: 1,
             length: 2,
+            life_steal: 0,
         }
+
         this.laser_stats = {
             damage: 10,
             length: 1.5,
@@ -127,6 +133,7 @@ export class Polygon_Survivors extends Scene {
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
             laser_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/kraken.png")}),
             orb_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
+            evolved_sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/bt.png")}),
             text_image: new Material(textured, {ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("assets/text.png")}),
 
         }
@@ -251,6 +258,15 @@ export class Polygon_Survivors extends Scene {
                     this.shapes.text.draw(context, program_state, opt2_text_transform.times(Mat4.translation(-7.33, 0, 0)), this.materials.text_image);
                 }
             }
+            else if(levelup_opts[i] === "evolve sword"){
+                materials.push(this.materials.evolved_sword_icon);
+                this.shapes.text.set_string("EVOLVE SWORD", context.context);
+                if (i === 0) {
+                    this.shapes.text.draw(context, program_state, opt1_text_transform.times(Mat4.translation(-9, 0, 0)), this.materials.text_image);
+                } else {
+                    this.shapes.text.draw(context, program_state, opt2_text_transform.times(Mat4.translation(-9, 0, 0)), this.materials.text_image);
+                }
+            }
         }
 
         console.log(materials.length);
@@ -273,6 +289,18 @@ export class Polygon_Survivors extends Scene {
             return false;
         }
         else if(!this.player.orb && option === "upgrade orb"){
+            return false;
+        }
+        else if(weapon_levels[0] !== 4 && option === "evolve sword"){
+            return false;
+        }
+        else if(weapon_levels[0] === 4 && option === "upgrade sword") {
+            return false;
+        }
+        else if(this.evolve_sword && option === "evolve sword"){
+            return false;
+        }
+        else if(this.evolve_sword && option === "upgrade sword") {
             return false;
         }
         else{
@@ -300,26 +328,35 @@ export class Polygon_Survivors extends Scene {
                     this.sword_stats.rotation_speed -= 0.2;
                 }
                 console.log("upgraded sword!");
+                weapon_levels[0]++;
                 break;
             case "new laser":
                 this.player.laser = true;
                 console.log("added new laser!");
                 player_weapons.push("laser");
+                weapon_levels[1]++;
                 break;
             case "upgrade laser":
                 this.laser_stats.damage += 2;
                 this.laser_stats.rate += 1;
                 console.log("upgraded laser!");
+                weapon_levels[1]++;
                 break;
             case "new orb":
                 this.player.orb = true;
                 console.log("added new orb!");
                 player_weapons.push("orb");
+                weapon_levels[2]++;
                 break;
             case "upgrade orb":
                 this.orb_stats.damage += 5;
                 this.orb_stats.radius += 0.3;
                 console.log("upgraded laser!");
+                weapon_levels[2]++;
+                break;
+            case "evolve sword":
+                this.sword_stats.life_steal = 0.1;
+                this.evolve_sword = true;
                 break;
         }
     }
@@ -373,9 +410,13 @@ export class Polygon_Survivors extends Scene {
             .times(Mat4.translation(-4, 0, 0))
             .times(Mat4.scale(this.sword_stats.length,0.2,0.2));
 
-        this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword);
-        this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword);
-
+        if (!this.evolve_sword) {
+            this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword);
+            this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword);
+        } else {
+            this.weapon_polys.rect.draw(context, program_state, this.sword_transform1, this.materials.sword.override({color: hex_color("#c30010")}));
+            this.weapon_polys.rect.draw(context, program_state, this.sword_transform2, this.materials.sword.override({color: hex_color("#c30010")}));
+        }
     }
 
 
@@ -535,7 +576,7 @@ export class Polygon_Survivors extends Scene {
             // Update the original element in the array with the rotated enemy
             element.transform = enemy_transform
                 .times(Mat4.rotation(angleDifference, 0, 0, 1))
-                .times(Mat4.translation(0.01, 0.01, 0));
+                .times(Mat4.translation(0.025, 0, 0));
 
             if (this.check_collision(this.player.transform, element.transform, 1.5)) {
                 // Handle player death (you can customize this part)
@@ -581,6 +622,12 @@ export class Polygon_Survivors extends Scene {
 
             if (sword_collision(sword1_points, enemy_pos, 2) || sword_collision(sword2_points, enemy_pos, 2)){
                 element.takeDamage(this.sword_stats.damage);
+                let heal = this.sword_stats.damage * this.sword_stats.life_steal;
+                if (this.player.health + heal > MAX_HEALTH) {
+                    this.player.health = MAX_HEALTH
+                } else {
+                    this.player.health += this.sword_stats.damage * this.sword_stats.life_steal;
+                }
                 element.hit = true;
                 //console.log("enemy took 10 damage! Health: " + element.health);
             }
@@ -732,8 +779,10 @@ export class Polygon_Survivors extends Scene {
         //console.log(square_transform);
 
         for (let i = 0; i < player_weapons.length; i++) {
-            if (player_weapons[i] === "sword") {
+            if (player_weapons[i] === "sword" && !this.evolve_sword) {
                 this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon);
+            } else if (player_weapons[i] === "sword" && this.evolve_sword) {
+                this.shapes.square.draw(context, program_state, square_transform, this.materials.evolved_sword_icon);
             } else if (player_weapons[i] === "orb") {
                 this.shapes.square.draw(context, program_state, square_transform, this.materials.orb_icon);
             } else {
@@ -768,11 +817,13 @@ export class Polygon_Survivors extends Scene {
         this.player.sword = true;
         this.player.laser = false;
         this.player.orb = false;
+        this.evolve_sword = false;
 
         enemies = [];
         orbs = [];
         lasers_left = [];
         lasers_right = [];
+        player_weapons = ["sword"];
 
         this.sword_stats.length = 2;
         this.sword_stats.rotation_speed = 1;
