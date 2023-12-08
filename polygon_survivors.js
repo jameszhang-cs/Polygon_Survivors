@@ -33,7 +33,8 @@ let upgrades = [
     "upgrade orb",
 ];
 
-
+let player_weapons = [];
+player_weapons.push("sword");
 
 let levelup_opts = [];
 
@@ -303,6 +304,7 @@ export class Polygon_Survivors extends Scene {
             case "new laser":
                 this.player.laser = true;
                 console.log("added new laser!");
+                player_weapons.push("laser");
                 break;
             case "upgrade laser":
                 this.laser_stats.damage += 2;
@@ -312,6 +314,7 @@ export class Polygon_Survivors extends Scene {
             case "new orb":
                 this.player.orb = true;
                 console.log("added new orb!");
+                player_weapons.push("orb");
                 break;
             case "upgrade orb":
                 this.orb_stats.damage += 5;
@@ -456,12 +459,8 @@ export class Polygon_Survivors extends Scene {
     update_orb_locations(t){
         let toRemove = [];
 
-
-
-
         let orb_x = this.orb_itnum ;
         this.orb_itnum = this.orb_itnum + (0.05);
-
 
         let a = 2;
         let b = 8;
@@ -728,10 +727,20 @@ export class Polygon_Survivors extends Scene {
 
         // Draw a square at the top-left corner of the screen
         let square_transform = model_transform
-            .times(Mat4.translation(-30, 20, 0))
+            .times(Mat4.translation(-34, 18, 5))
             .times(Mat4.scale(2, 2, 0));
         //console.log(square_transform);
-        this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon); // Use the desired material
+
+        for (let i = 0; i < player_weapons.length; i++) {
+            if (player_weapons[i] === "sword") {
+                this.shapes.square.draw(context, program_state, square_transform, this.materials.sword_icon);
+            } else if (player_weapons[i] === "orb") {
+                this.shapes.square.draw(context, program_state, square_transform, this.materials.orb_icon);
+            } else {
+                this.shapes.square.draw(context, program_state, square_transform, this.materials.laser_icon);
+            }
+            square_transform = square_transform.times(Mat4.translation(2.5, 0, 0));
+        }
     }
 
     draw_level_text(context, program_state) {
