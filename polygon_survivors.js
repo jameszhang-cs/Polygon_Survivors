@@ -14,7 +14,7 @@ const MIN_X = -40;
 const MAX_Y = 25;
 const MIN_Y = -25;
 const PROJ_Z = 1;
-const MAX_HEALTH = 100;
+const MAX_HEALTH = 75;
 
 let enemies = [];
 
