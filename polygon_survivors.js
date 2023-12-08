@@ -9,10 +9,10 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Texture, Material, Scene,
 } = tiny;
 
-const MAX_X = 20;
-const MIN_X = -20;
-const MAX_Y = 20;
-const MIN_Y = -20;
+const MAX_X = 50;
+const MIN_X = -50;
+const MAX_Y = 30;
+const MIN_Y = -30;
 const PROJ_Z = 1;
 const MAX_HEALTH = 100;
 
@@ -48,7 +48,7 @@ export class Polygon_Survivors extends Scene {
 
         this.start_screen = true;
 
-        this.player = new Player(MAX_HEALTH, 1, Mat4.identity(), [0,0], 0.08);
+        this.player = new Player(MAX_HEALTH, 1, Mat4.identity(), [0,0], 0.13);
         this.levelup_state = false;
 
         this.player_polys = {
@@ -64,7 +64,7 @@ export class Polygon_Survivors extends Scene {
 
 
         this.sword_stats = {
-            damage: 1,
+            damage: 2,
             rotation_speed: 1,
             length: 2,
         }
@@ -198,11 +198,11 @@ export class Polygon_Survivors extends Scene {
         let opt1_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(-3, 0, 1));
         let opt1_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0)).times(Mat4.scale(1/5, 1/5, 0, 0));
         //Rectangle 2
-        let opt2_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(0, 0, 1));
+        let opt2_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(3, 0, 1));
         let opt2_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0));
         //Rectangle 3
-        let opt3_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(3, 0, 1));
-        let opt3_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0));
+        //let opt3_transform = model_transform.times(Mat4.scale(5, 5, 0, 0)).times(Mat4.translation(3, 0, 1));
+        //let opt3_text_transform = opt1_transform.times(Mat4.translation(0, 1, 0));
 
         let materials = [];
         let texts = [];
@@ -234,7 +234,7 @@ export class Polygon_Survivors extends Scene {
 
         this.shapes.square.draw(context, program_state, opt1_transform, materials[0]);
         this.shapes.square.draw(context, program_state, opt2_transform, materials[1]);
-        this.shapes.square.draw(context, program_state, opt3_transform, materials[2]);
+        //this.shapes.square.draw(context, program_state, opt3_transform, materials[2]);
     }
 
     valid_option(levelup_opts, option){
@@ -259,7 +259,7 @@ export class Polygon_Survivors extends Scene {
     }
     gen_levelup_opts() {
         let levelup_opts = [];
-        for (let i=0; i<3; i++){
+        for (let i=0; i<2; i++){
             let randomIndex = Math.floor(Math.random() * upgrades.length);
             while(!this.valid_option(levelup_opts, upgrades[randomIndex])){
                 randomIndex = Math.floor(Math.random() * upgrades.length);
@@ -274,6 +274,9 @@ export class Polygon_Survivors extends Scene {
             case "upgrade sword":
                 this.sword_stats.damage += 2;
                 this.sword_stats.length += 0.2;
+                if(this.sword_stats.rotation_speed > 0.2){
+                    this.sword_stats.rotation_speed -= 0.2;
+                }
                 console.log("upgraded sword!");
                 break;
             case "new laser":
@@ -297,17 +300,14 @@ export class Polygon_Survivors extends Scene {
         }
     }
     choose_levelup(x) {
-        if (x < -0.33) {
+        if (x < 0) {
             console.log("option 1");
             this.execute_option(levelup_opts[0]);
             //handle opt 1
-        } else if (x < 0.33) {
+        }
+        else {
             console.log("option 2");
             this.execute_option(levelup_opts[1]);
-            //handle opt 2
-        } else {
-            console.log("option 3");
-            this.execute_option(levelup_opts[2]);
             //handle opt 3
         }
     }
