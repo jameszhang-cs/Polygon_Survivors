@@ -117,7 +117,7 @@ export class Polygon_Survivors extends Scene {
 
             rect: new defs.Cube(),
             circle: new defs.Subdivision_Sphere(3),
-            circle4: new defs.Subdivision_Sphere(4),
+            circle4: new defs.Capped_Cylinder(50, 50, [0, 2], [0, 1]),
         }
 
         this.sword_transform1 = Mat4.identity();
@@ -1056,7 +1056,7 @@ export class Polygon_Survivors extends Scene {
         let level_transform = model_transform
             .times(Mat4.translation(-5, 19, 5));
 
-        let level_str = "Level: " + this.player.level + "      High score: " + this.highscore;
+        let level_str = "Level: " + this.player.level + "      High Score: " + this.highscore;
         console.log(level_str);
         this.shapes.text.set_string(level_str, context.context);
         this.shapes.text.draw(context, program_state, level_transform, this.materials.text_image);
