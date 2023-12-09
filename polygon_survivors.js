@@ -146,19 +146,19 @@ export class Polygon_Survivors extends Scene {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             enemy: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#4397ce")}),
+                {ambient: 0.5, diffusivity: .6, color: hex_color("#61ff72")}),
             player: new Material(new Gouraud_Shader(),
-                {ambient: 0.7, diffusivity: .6, color: hex_color("#75529d")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#6930af")}),
             sword: new Material(new defs.Phong_Shader(),
-                {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#919191")}),
+                {ambient: 1, diffusivity: .6, specularity: 1, color: hex_color("#ededf4")}),
             orb: new Material(new defs.Phong_Shader(),
-                {ambient: 0.7, diffusivity: .6, color: hex_color("#858080")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#a6a6a6")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             laser2: new Material(textured, {ambient: 1, texture: new Texture("assets/yellow1.png")}),
             horn: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#dedede")}),
-            grass: new Material(textured, {ambient: 0.8, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
+            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/bluegrass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
             laser_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/kraken.png")}),
@@ -171,7 +171,7 @@ export class Polygon_Survivors extends Scene {
             meteor_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/fireball.png")}),
         }
 
-        this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(16));
+        this.shapes.field.arrays.texture_coord = this.shapes.field.arrays.texture_coord.map(x => x.times(9));
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 0, 55), vec3(0, 0, 0), vec3(0, 1, 0));
     }
@@ -957,19 +957,19 @@ export class Polygon_Survivors extends Scene {
 
         let material;
         if(hit === true){
-            material = this.materials.enemy.override({color:hex_color("#832b2b")});
+            material = this.materials.enemy.override({color:hex_color("#ff4949")});
 
         }
         else if (level === 1){
             material = this.materials.enemy;
         }
         else if(level === 2){
-            material = this.materials.enemy.override({color:hex_color("#5c3ea2")})
+            material = this.materials.enemy.override({color:hex_color("#7444e0")})
         }
         else if(level === 3){
-            material = this.materials.enemy.override({color:hex_color("#5e1616")})
+            material = this.materials.enemy.override({color:hex_color("#b01d1d")})
         }else{
-            material = this.materials.enemy.override({color:hex_color("#FFB6C1")})
+            material = this.materials.enemy.override({color:hex_color("#ff59f1")})
         }
 
         let horn1_transform = enemy_transform.times(Mat4.translation(1.3 * scale, 0, scale))
@@ -1106,20 +1106,12 @@ export class Polygon_Survivors extends Scene {
     }
 
     draw_light(model_transform, program_state){
-        let rot1 = model_transform.times(Mat4.rotation(this.rotation_angle,0,1,0))
-            .times(Mat4.translation(0,0,60));
+        let rot1 = model_transform.times(Mat4.rotation(this.rotation_angle,0,0,1))
+            .times(Mat4.translation(0,40,60));
         let light_vec = vec4(rot1[0][3],rot1[1][3], rot1[2][3], 1);
         //console.log("light_Vec " + light_vec);
+        program_state.lights = [new Light(light_vec, color(160, 255, 255, 1), 5)];
 
-        if (light_vec[2] < 0){
-            rot1 = model_transform.times(Mat4.rotation(this.rotation_angle+Math.PI,0,1,0))
-                .times(Mat4.translation(0,0,60));
-            light_vec = vec4(rot1[0][3],rot1[1][3], rot1[2][3], 1);
-            program_state.lights = [new Light(light_vec, color(255, 0, 0, 1), 1)];
-        }else {
-            // The parameters of the Light are: position, color, size
-            program_state.lights = [new Light(light_vec, color(255, 255, 255, 1), 1)];
-        }
         return program_state;
     }
 
