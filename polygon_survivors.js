@@ -158,7 +158,7 @@ export class Polygon_Survivors extends Scene {
             laser2: new Material(textured, {ambient: 1, texture: new Texture("assets/yellow1.png")}),
             horn: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#dedede")}),
-            grass: new Material(textured, {ambient: 1, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
+            grass: new Material(textured, {ambient: 0.8, texture: new Texture("assets/grass.png", "LINEAR_MIPMAP_LINEAR")}),
             start_menu: new Material(textured, {ambient: 1, texture: new Texture("assets/start_text.png", "LINEAR_MIPMAP_LINEAR")}),
             sword_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/sword_icon.png")}),
             laser_icon: new Material(textured, {ambient: 1, texture: new Texture("assets/kraken.png")}),
@@ -516,11 +516,12 @@ export class Polygon_Survivors extends Scene {
 
     draw_laser(context, program_state, model_transform, t){
         let count = t / 2  ;
+        let laser_rotation = model_transform.times(Mat4.rotation(Math.sin(2*t), 0, 0, 1))
         if (count > lasers_left.length && lasers_left.length < this.laser_stats.rate) {
-            lasers_left.push(new Projectile(MAX_HEALTH, model_transform));
+            lasers_left.push(new Projectile(MAX_HEALTH, laser_rotation));
         }
         if (count > lasers_right.length && lasers_right.length < this.laser_stats.rate) {
-            lasers_right.push(new Projectile(MAX_HEALTH, model_transform));
+            lasers_right.push(new Projectile(MAX_HEALTH, laser_rotation));
         }
 
         lasers_left.forEach(element => {

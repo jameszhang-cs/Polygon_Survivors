@@ -36,7 +36,7 @@ export class Player extends Entity {
         this.curr_xp = 0;
 
         this.sword = true;
-        this.laser = false;
+        this.laser = true;
         this.orb = false;
         this.meteor = false;
     }
