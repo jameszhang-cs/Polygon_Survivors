@@ -152,7 +152,7 @@ export class Polygon_Survivors extends Scene {
             sword: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: .6, specularity: 1, color: hex_color("#ededf4")}),
             orb: new Material(new defs.Phong_Shader(),
-                {ambient: 0.7, diffusivity: .6, color: hex_color("#a6a6a6")}),
+                {ambient: 0.7, diffusivity: .6, color: hex_color("#e3e3e3")}),
             laser: new Material(new defs.Phong_Shader(),
                 {ambient: 0.7, diffusivity: .6, specularity: 1, color: hex_color("#FFFF00")}),
             laser2: new Material(textured, {ambient: 1, texture: new Texture("assets/yellow1.png")}),
