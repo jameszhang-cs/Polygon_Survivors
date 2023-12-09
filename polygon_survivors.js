@@ -117,7 +117,7 @@ export class Polygon_Survivors extends Scene {
 
             rect: new defs.Cube(),
             circle: new defs.Subdivision_Sphere(3),
-            circle4: new defs.Subdivision_Sphere(4),
+            circle4: new defs.Capped_Cylinder(50, 50, [0, 2], [0, 1]),
         }
 
         this.sword_transform1 = Mat4.identity();
@@ -1202,7 +1202,7 @@ export class Polygon_Survivors extends Scene {
                 this.draw_laser(context, program_state, this.player.transform, t);
             }
 
-            if(this.player.meteor) {
+            if(this.player.meteor || !this.player.meteor) {
                 let meteor_spawn = Mat4.identity();
                 let rand_x = getRandomInteger(-5,5);
                 let rand_y = getRandomInteger(-5,5);
