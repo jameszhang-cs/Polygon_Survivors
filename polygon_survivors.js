@@ -1202,7 +1202,7 @@ export class Polygon_Survivors extends Scene {
                 this.draw_laser(context, program_state, this.player.transform, t);
             }
 
-            if(this.player.meteor || !this.player.meteor) {
+            if(this.player.meteor) {
                 let meteor_spawn = Mat4.identity();
                 let rand_x = getRandomInteger(-5,5);
                 let rand_y = getRandomInteger(-5,5);
